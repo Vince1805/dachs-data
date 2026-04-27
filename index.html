@@ -12,7 +12,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
     <script src="https://cdn.tailwindcss.com"></script>
@@ -23,47 +23,30 @@
             fontFamily: {
               sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
             },
-            colors: {
-              brand: {
-                blue: "#0A2A6B",
-                navy: "#061A45",
-                ink: "#0B0B0B",
-                surface: "#F6F8FC",
-              },
-            },
           },
         },
       };
     </script>
     <style>
-      html {
-        scroll-behavior: smooth;
-      }
-      body {
-        font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+      html { scroll-behavior: smooth; }
+      body { font-family: "Inter", ui-sans-serif, system-ui, sans-serif; }
+      @keyframes ping {
+        75%, 100% { transform: scale(2); opacity: 0; }
       }
       .ping-dot::before {
         content: "";
-        position: absolute;
-        inset: 0;
+        position: absolute; inset: 0;
         border-radius: 9999px;
-        background-color: #0a2a6b;
+        background-color: #0A2A6B;
         opacity: 0.6;
-        animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
-      }
-      @keyframes ping {
-        75%,
-        100% {
-          transform: scale(2);
-          opacity: 0;
-        }
+        animation: ping 1.5s cubic-bezier(0,0,0.2,1) infinite;
       }
     </style>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   </head>
-  <body class="bg-white text-[#0B0B0B] antialiased" style="font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;">
+  <body class="bg-white text-[#0B0B0B] antialiased">
     <div id="root"></div>
 
     <script type="text/babel" data-presets="react">
@@ -85,18 +68,18 @@
         </span>
       );
 
-      const PrimaryButton = ({ children, href = "#pilot", className = "" }) => (
+      const PrimaryButton = ({ children, href = "#pilot", className = "", onClick }) => (
         <a
           href={href}
+          onClick={onClick}
           style={{ backgroundColor: "#0A2A6B", color: "#FFFFFF" }}
-          className={`group inline-flex items-center justify-center gap-2 rounded-md px-5 py-3 text-sm font-medium shadow-sm transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${className}`}
+          className={`group inline-flex items-center justify-center gap-2 rounded-md px-5 py-3 text-sm font-medium shadow-sm transition-all duration-200 hover:shadow-md focus:outline-none ${className}`}
           onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#08245C")}
           onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#0A2A6B")}
         >
           {children}
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden>
-            <path d="M5 12h14" />
-            <path d="m12 5 7 7-7 7" />
+            <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
           </svg>
         </a>
       );
@@ -114,11 +97,9 @@
         </a>
       );
 
-      // ---------- Logo (inline SVG — crisp, predictable, theme-aware) ----------
-      const Logo = ({ dark = false, size = "sm" }) => {
+      // ---------- Logo (Archivo Black with stroke outline + solid DATA) ----------
+      const Logo = ({ dark = false, height = 56 }) => {
         const color = dark ? "#FFFFFF" : "#0A2A6B";
-        const height = size === "md" ? 76 : 38;
-
         return (
           <a
             href="#top"
@@ -126,46 +107,52 @@
             style={{ display: "inline-flex", alignItems: "center", color, lineHeight: 0 }}
           >
             <svg
-              viewBox="0 0 240 110"
+              viewBox="0 0 360 160"
               height={height}
               xmlns="http://www.w3.org/2000/svg"
               style={{ display: "block", overflow: "visible" }}
               aria-hidden="true"
             >
               <text
-                x="120"
-                y="55"
-                textAnchor="middle"
-                fontFamily='Inter, "Helvetica Neue", Arial, sans-serif'
-                fontWeight="800"
-                fontSize="48"
-                letterSpacing="4"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.6"
-              >
-                DACHS
-              </text>
+                x="180" y="80" textAnchor="middle"
+                fontFamily="'Archivo Black', 'Helvetica Neue', Arial, sans-serif"
+                fontWeight="400" fontSize="80" letterSpacing="2"
+                fill="none" stroke="currentColor" strokeWidth="2.2"
+                strokeLinejoin="round" paintOrder="stroke fill"
+              >DACHS</text>
               <text
-                x="120"
-                y="100"
-                textAnchor="middle"
-                fontFamily='Inter, "Helvetica Neue", Arial, sans-serif'
-                fontWeight="800"
-                fontSize="30"
-                letterSpacing="10"
+                x="180" y="140" textAnchor="middle"
+                fontFamily="'Archivo Black', 'Helvetica Neue', Arial, sans-serif"
+                fontWeight="400" fontSize="40" letterSpacing="14"
                 fill="currentColor"
-              >
-                DATA
-              </text>
+              >DATA</text>
             </svg>
           </a>
         );
       };
 
-      // ---------- Nav ----------
+      // ---------- Hamburger Icon ----------
+      const MenuIcon = ({ open }) => (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          {open ? (
+            <g>
+              <path d="M6 6l12 12" />
+              <path d="M6 18L18 6" />
+            </g>
+          ) : (
+            <g>
+              <path d="M4 7h16" />
+              <path d="M4 12h16" />
+              <path d="M4 17h16" />
+            </g>
+          )}
+        </svg>
+      );
+
+      // ---------- Nav (responsive, mobile center logo + hamburger) ----------
       const Nav = () => {
         const [scrolled, setScrolled] = useState(false);
+        const [menuOpen, setMenuOpen] = useState(false);
         useEffect(() => {
           const onScroll = () => setScrolled(window.scrollY > 8);
           onScroll();
@@ -173,31 +160,71 @@
           return () => window.removeEventListener("scroll", onScroll);
         }, []);
 
+        const closeMenu = () => setMenuOpen(false);
         const linkClass = "text-sm text-[#0B0B0B]/70 transition-colors hover:text-[#0B0B0B]";
 
         return (
           <header
             className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
-              scrolled ? "border-b border-black/5 bg-white/80 backdrop-blur-md" : "border-b border-transparent bg-transparent"
+              scrolled || menuOpen ? "border-b border-black/5 bg-white/90 backdrop-blur-md" : "border-b border-transparent bg-transparent"
             }`}
           >
-            <Container className="flex h-16 items-center justify-between">
-              <Logo />
-              <nav className="hidden items-center gap-8 md:flex">
-                <a href="#problem" className={linkClass}>Problem</a>
-                <a href="#loesung" className={linkClass}>Lösung</a>
-                <a href="#case" className={linkClass}>Case Study</a>
-                <a href="#ablauf" className={linkClass}>Ablauf</a>
+            <Container className="flex h-20 items-center md:h-24">
+              {/* Mobile: hamburger left */}
+              <button
+                aria-label="Menü öffnen"
+                aria-expanded={menuOpen}
+                onClick={() => setMenuOpen(!menuOpen)}
+                className="flex h-10 w-10 items-center justify-center rounded-md text-[#0B0B0B] hover:bg-black/[0.04] md:hidden"
+              >
+                <MenuIcon open={menuOpen} />
+              </button>
+
+              {/* Logo: center on mobile, left on desktop */}
+              <div className="flex flex-1 justify-center md:flex-none md:justify-start">
+                <Logo height={56} />
+              </div>
+
+              {/* Desktop nav */}
+              <nav className="hidden flex-1 items-center justify-center gap-8 md:flex">
+                <a href="#problem" className={linkClass} onClick={closeMenu}>Problem</a>
+                <a href="#loesung" className={linkClass} onClick={closeMenu}>Lösung</a>
+                <a href="#case" className={linkClass} onClick={closeMenu}>Case Study</a>
+                <a href="#ablauf" className={linkClass} onClick={closeMenu}>Ablauf</a>
               </nav>
+
+              {/* Desktop CTA */}
               <PrimaryButton href="#pilot" className="hidden md:inline-flex">Pilot starten</PrimaryButton>
+
+              {/* Mobile: spacer to balance hamburger */}
+              <div className="h-10 w-10 md:hidden" aria-hidden />
             </Container>
+
+            {/* Mobile menu drawer */}
+            <div
+              className={`overflow-hidden transition-[max-height] duration-300 ease-out md:hidden ${
+                menuOpen ? "max-h-96" : "max-h-0"
+              }`}
+            >
+              <Container className="border-t border-black/5 py-5">
+                <nav className="flex flex-col gap-1">
+                  <a href="#problem" onClick={closeMenu} className="rounded-md px-3 py-3 text-base text-[#0B0B0B] hover:bg-black/[0.04]">Problem</a>
+                  <a href="#loesung" onClick={closeMenu} className="rounded-md px-3 py-3 text-base text-[#0B0B0B] hover:bg-black/[0.04]">Lösung</a>
+                  <a href="#case" onClick={closeMenu} className="rounded-md px-3 py-3 text-base text-[#0B0B0B] hover:bg-black/[0.04]">Case Study</a>
+                  <a href="#ablauf" onClick={closeMenu} className="rounded-md px-3 py-3 text-base text-[#0B0B0B] hover:bg-black/[0.04]">Ablauf</a>
+                </nav>
+                <div className="mt-4">
+                  <PrimaryButton href="#pilot" onClick={closeMenu} className="w-full">Pilot starten</PrimaryButton>
+                </div>
+              </Container>
+            </div>
           </header>
         );
       };
 
       // ---------- Hero ----------
       const Hero = () => (
-        <section id="top" className="relative overflow-hidden pt-32 pb-24 md:pt-40 md:pb-32">
+        <section id="top" className="relative overflow-hidden pt-36 pb-24 md:pt-44 md:pb-32">
           <div
             className="pointer-events-none absolute inset-0 -z-10 opacity-[0.5]"
             style={{
@@ -251,7 +278,8 @@
 
       // ---------- Problem ----------
       const ProblemCard = ({ icon, title, body }) => (
-        <div className="group relative rounded-xl border border-black/10 bg-white p-7 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_10px_40px_-12px_rgba(10,42,107,0.25)]" style={{}}
+        <div
+          className="group relative rounded-xl border border-black/10 bg-white p-7 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_10px_40px_-12px_rgba(10,42,107,0.25)]"
           onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(10,42,107,0.3)")}
           onMouseLeave={(e) => (e.currentTarget.style.borderColor = "rgba(0,0,0,0.1)")}
         >
@@ -264,7 +292,7 @@
       );
 
       const Problem = () => (
-        <section id="problem" className="scroll-mt-24 border-t border-black/5 bg-white py-24 md:py-32">
+        <section id="problem" className="scroll-mt-28 border-t border-black/5 bg-white py-24 md:py-32">
           <Container>
             <div className="max-w-2xl">
               <SectionLabel>Das Problem</SectionLabel>
@@ -276,34 +304,19 @@
                 Das Ergebnis ist messbar — und teuer.
               </p>
             </div>
-
             <div className="mt-14 grid gap-5 md:grid-cols-3">
               <ProblemCard
-                icon={
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                    <circle cx="12" cy="12" r="9" />
-                    <path d="M12 7v5l3 2" />
-                  </svg>
-                }
+                icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>}
                 title="Verspätete Zahlungen"
                 body="Rechnungen bleiben offen, weil niemand systematisch nachfasst. Der DSO steigt, oft ohne dass es jemand merkt."
               />
               <ProblemCard
-                icon={
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                    <path d="M4 6h16M4 12h16M4 18h10" />
-                  </svg>
-                }
+                icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 6h16M4 12h16M4 18h10" /></svg>}
                 title="Manueller Aufwand"
                 body="Buchhaltung verbringt Stunden mit Listen, Mahnungen und Telefonaten — Zeit, die im Tagesgeschäft fehlt."
               />
               <ProblemCard
-                icon={
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                    <rect x="3" y="6" width="18" height="13" rx="2" />
-                    <path d="M3 10h18M8 15h2" />
-                  </svg>
-                }
+                icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="6" width="18" height="13" rx="2" /><path d="M3 10h18M8 15h2" /></svg>}
                 title="Gebundene Liquidität"
                 body="Geld, das auf Kundenkonten liegt statt im Unternehmen — und damit nicht für Wachstum, Lager oder Löhne arbeitet."
               />
@@ -315,19 +328,16 @@
       // ---------- Solution ----------
       const SolutionPillar = ({ index, title, body }) => (
         <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-7 backdrop-blur-sm transition-all duration-300 hover:border-white/[0.15] hover:bg-white/[0.06]">
-          <div className="flex items-center gap-3">
-            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-white/10 text-xs font-medium text-white">
-              {index}
-            </span>
-            <span className="text-xs uppercase tracking-[0.18em] text-white/50">Pillar {index}</span>
+          <div className="flex items-start gap-3">
+            <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md bg-white/10 text-xs font-medium text-white">{index}</span>
+            <h3 className="text-lg font-semibold leading-tight tracking-tight text-white">{title}</h3>
           </div>
-          <h3 className="mt-5 text-lg font-semibold tracking-tight text-white">{title}</h3>
-          <p className="mt-2 text-sm leading-relaxed text-white/60">{body}</p>
+          <p className="mt-4 text-sm leading-relaxed text-white/60">{body}</p>
         </div>
       );
 
       const Solution = () => (
-        <section id="loesung" className="scroll-mt-24 py-24 md:py-32" style={{ backgroundColor: "#061A45" }}>
+        <section id="loesung" className="scroll-mt-28 py-24 md:py-32" style={{ backgroundColor: "#061A45" }}>
           <Container>
             <div className="max-w-2xl">
               <SectionLabel dark>Die Lösung</SectionLabel>
@@ -339,7 +349,6 @@
                 Du behältst die Kontrolle — ohne den manuellen Aufwand.
               </p>
             </div>
-
             <div className="mt-14 grid gap-5 md:grid-cols-3">
               <SolutionPillar index="01" title="Automatisiertes Forderungsmanagement" body="Offene Posten werden automatisch importiert, klassifiziert und priorisiert — täglich, ohne Excel-Pflege." />
               <SolutionPillar index="02" title="Systematische Mahnprozesse" body="Definierte Mahnstufen, automatische Trigger, persönliche Ansprache. Kein Kunde wird vergessen, kein Ton zu hart." />
@@ -356,20 +365,15 @@
           style={{
             borderColor: accent ? "#0A2A6B" : "rgba(0,0,0,0.1)",
             backgroundColor: accent ? "#0A2A6B" : "#FFFFFF",
-            color: accent ? "#FFFFFF" : "#0B0B0B",
           }}
         >
-          <div className="text-3xl font-semibold tracking-tight md:text-4xl" style={{ color: accent ? "#FFFFFF" : "#0B0B0B" }}>
-            {value}
-          </div>
-          <div className="mt-2 text-sm" style={{ color: accent ? "rgba(255,255,255,0.75)" : "rgba(11,11,11,0.6)" }}>
-            {label}
-          </div>
+          <div className="text-3xl font-semibold tracking-tight md:text-4xl" style={{ color: accent ? "#FFFFFF" : "#0B0B0B" }}>{value}</div>
+          <div className="mt-2 text-sm" style={{ color: accent ? "rgba(255,255,255,0.75)" : "rgba(11,11,11,0.6)" }}>{label}</div>
         </div>
       );
 
       const CaseStudy = () => (
-        <section id="case" className="scroll-mt-24 border-t border-black/5 py-24 md:py-32" style={{ backgroundColor: "#F6F8FC" }}>
+        <section id="case" className="scroll-mt-28 border-t border-black/5 py-24 md:py-32" style={{ backgroundColor: "#F6F8FC" }}>
           <Container>
             <div className="grid gap-12 md:grid-cols-12 md:gap-10">
               <div className="md:col-span-5">
@@ -381,11 +385,8 @@
                   Ein typisches Mittelstandsszenario: ein vergleichsweise gesunder Zahlungsfluss — und trotzdem fast eine{" "}
                   <span className="font-medium text-[#0B0B0B]">halbe Million Euro pro Jahr</span> unnötig gebundenes Kapital.
                 </p>
-                <p className="mt-3 text-sm text-[#0B0B0B]/50">
-                  Die Zahlen unten zeigen, wie sich kleine Verzögerungen über das Jahr aufaddieren.
-                </p>
+                <p className="mt-3 text-sm text-[#0B0B0B]/50">Die Zahlen unten zeigen, wie sich kleine Verzögerungen über das Jahr aufaddieren.</p>
               </div>
-
               <div className="md:col-span-7">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Stat value="500.000 €" label="Monatliches Rechnungsvolumen" />
@@ -393,9 +394,7 @@
                   <Stat value="≈ 50.000 €" label="Gebundene Liquidität pro Monat" />
                   <Stat value="≈ 600.000 €" label="Gebundene Liquidität pro Jahr" accent />
                 </div>
-                <p className="mt-5 text-xs text-[#0B0B0B]/45">
-                  Beispielrechnung. Reale Werte hängen von Zahlungsbedingungen, Branche und Mahnprozess ab.
-                </p>
+                <p className="mt-5 text-xs text-[#0B0B0B]/45">Beispielrechnung. Reale Werte hängen von Zahlungsbedingungen, Branche und Mahnprozess ab.</p>
               </div>
             </div>
           </Container>
@@ -406,12 +405,8 @@
       const Step = ({ number, title, body, last = false }) => (
         <div className="relative flex-1">
           <div className="flex items-center gap-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold text-white shadow-[0_4px_16px_-4px_rgba(10,42,107,0.5)]" style={{ backgroundColor: "#0A2A6B" }}>
-              {number}
-            </span>
-            {!last && (
-              <span className="hidden h-px flex-1 md:block" style={{ background: "linear-gradient(to right, rgba(10,42,107,0.3), transparent)" }} aria-hidden />
-            )}
+            <span className="flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold text-white shadow-[0_4px_16px_-4px_rgba(10,42,107,0.5)]" style={{ backgroundColor: "#0A2A6B" }}>{number}</span>
+            {!last && <span className="hidden h-px flex-1 md:block" style={{ background: "linear-gradient(to right, rgba(10,42,107,0.3), transparent)" }} aria-hidden />}
           </div>
           <h3 className="mt-5 text-lg font-semibold tracking-tight text-[#0B0B0B]">{title}</h3>
           <p className="mt-2 max-w-xs text-sm leading-relaxed text-[#0B0B0B]/60">{body}</p>
@@ -419,7 +414,7 @@
       );
 
       const HowItWorks = () => (
-        <section id="ablauf" className="scroll-mt-24 border-t border-black/5 bg-white py-24 md:py-32">
+        <section id="ablauf" className="scroll-mt-28 border-t border-black/5 bg-white py-24 md:py-32">
           <Container>
             <div className="max-w-2xl">
               <SectionLabel>So funktioniert's</SectionLabel>
@@ -427,7 +422,6 @@
                 In drei Schritten zu automatisiertem Cashflow.
               </h2>
             </div>
-
             <div className="mt-14 flex flex-col gap-12 md:flex-row md:gap-8">
               <Step number="1" title="Daten importieren" body="Du lädst deine offenen Posten als Excel oder CSV hoch — oder verbindest dein ERP direkt. Setup in unter 30 Minuten." />
               <Step number="2" title="System analysiert offene Forderungen" body="DACHS DATA klassifiziert nach Fälligkeit, Risiko und Kundensegment. Du siehst sofort, wo Liquidität blockiert ist." />
@@ -439,7 +433,7 @@
 
       // ---------- Final CTA ----------
       const FinalCTA = () => (
-        <section id="pilot" className="scroll-mt-24 relative overflow-hidden py-24 md:py-32" style={{ backgroundColor: "#061A45" }}>
+        <section id="pilot" className="scroll-mt-28 relative overflow-hidden py-24 md:py-32" style={{ backgroundColor: "#061A45" }}>
           <div
             className="pointer-events-none absolute inset-x-0 top-0 -z-0 h-[520px] opacity-60 blur-3xl"
             style={{ background: "radial-gradient(ellipse at top, rgba(10,42,107,0.9), transparent 65%)" }}
@@ -458,9 +452,7 @@
                 <PrimaryButton href="#kontakt">Jetzt Pilot starten</PrimaryButton>
                 <SecondaryButton href="#kontakt" dark>Demo vereinbaren</SecondaryButton>
               </div>
-              <p className="mt-6 text-xs uppercase tracking-[0.18em] text-white/40">
-                Keine Vertragsbindung · Setup in unter 30 Minuten
-              </p>
+              <p className="mt-6 text-xs uppercase tracking-[0.18em] text-white/40">Keine Vertragsbindung · Setup in unter 30 Minuten</p>
             </div>
           </Container>
         </section>
@@ -471,13 +463,11 @@
         <footer id="kontakt" className="border-t border-white/5 py-12" style={{ backgroundColor: "#061A45" }}>
           <Container className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
             <div className="flex flex-col gap-3">
-              <Logo dark />
+              <Logo dark height={56} />
               <p className="text-xs text-white/40">© {new Date().getFullYear()} DACHS DATA. Alle Rechte vorbehalten.</p>
             </div>
             <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-8">
-              <a href="mailto:hello@dachsdata.com" className="text-sm text-white/70 transition-colors hover:text-white">
-                hello@dachsdata.com
-              </a>
+              <a href="mailto:hello@dachsdata.com" className="text-sm text-white/70 transition-colors hover:text-white">hello@dachsdata.com</a>
               <a href="#impressum" className="text-xs text-white/40 transition-colors hover:text-white/70">Impressum</a>
               <a href="#datenschutz" className="text-xs text-white/40 transition-colors hover:text-white/70">Datenschutz</a>
             </div>
