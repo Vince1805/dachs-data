@@ -6,24 +6,24 @@ const supabaseClient = window.supabase.createClient(
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1td2hwY29wd3lnYWJ3bXN6ZGxzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczMTQ4MzUsImV4cCI6MjA5Mjg5MDgzNX0.NY5SEa7i7ZUbfEWa8ZuY6xYvJSgSxijLa8rHp21FPKk"
 )
 
-// 🔒 check ob user eingeloggt ist
+// 🔒 Auth Check (FIX)
 async function checkUser() {
-  const { data } = await supabaseClient.auth.getUser()
+  const { data: { session } } = await supabaseClient.auth.getSession()
 
-  if (!data.user) {
-    window.location.href = "/login.html"
+  if (!session) {
+    window.location.replace("/login.html")
   } else {
-    console.log("User:", data.user.email)
+    console.log("User logged in:", session.user.email)
   }
 }
 
-// 🚪 logout
+// 🚪 Logout
 async function logout() {
   await supabaseClient.auth.signOut()
-  window.location.href = "/login.html"
+  window.location.replace("/login.html")
 }
 
-// 📁 upload placeholder
+// 📁 Upload
 function uploadFile() {
   const file = document.getElementById("fileInput").files[0]
 
@@ -35,5 +35,6 @@ function uploadFile() {
   alert("Datei geladen: " + file.name)
 }
 
-checkUser()
+// 🔥 wichtig: erst laden, dann check
+window.onload = checkUser
 </script>
