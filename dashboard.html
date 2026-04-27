@@ -301,3 +301,26 @@
   </script>
 </body>
 </html>
+<script>
+async function uploadFile() {
+  const file = document.getElementById("fileInput").files[0]
+
+  if (!file) {
+    alert("Bitte Datei auswählen")
+    return
+  }
+
+  const fileName = `${Date.now()}_${file.name}`
+
+  const { data, error } = await supabaseClient.storage
+    .from("uploads")
+    .upload(fileName, file)
+
+  if (error) {
+    alert("Fehler beim Upload: " + error.message)
+  } else {
+    alert("Upload erfolgreich!")
+    console.log("File URL:", data.path)
+  }
+}
+</script>
