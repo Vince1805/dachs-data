@@ -348,29 +348,152 @@
 
     // Kick off
     checkSession();
-  </script>
-</body>
-</html>
-<script>
+ <script>
+const SUPABASE_URL = "https://mmwhpcopwygabwmszdls.supabase.co";
+const SUPABASE_ANON_KEY = "DEIN_ECHTER_ANON_KEY";
+
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const fileInput = document.getElementById("fileInput");
+const uploadBtn = document.getElementById("uploadBtn");
+const statusBox = document.getElementById("status");
+const userEmail = document.getElementById("userEmail");
+const logoutBtn = document.getElementById("logoutBtn");
+
+async function checkSession() {
+  const { data } = await supabaseClient.auth.getSession();
+
+  if (!data.session) {
+    window.location.href = "/login.html";
+    return;
+  }
+
+  if (userEmail) {
+    userEmail.textContent = data.session.user.email;
+  }
+
+  await loadInvoices();
+}
+
+async function logout() {
+  await supabaseClient.auth.signOut();
+  window.location.href = "/login.html";
+}
+
 async function uploadFile() {
-  const file = document.getElementById("fileInput").files[0]
+  const file = fileInput.files && fileInput.files[0];
 
   if (!file) {
-    alert("Bitte Datei auswählen")
-    return
+    alert("Bitte Datei auswählen");
+    return;
   }
 
-  const fileName = `${Date.now()}_${file.name}`
+  const { data: { session } } = await supabaseClient.auth.getSession();
 
-  const { data, error } = await supabaseClient.storage
+  if (!session) {
+    window.location.href = "/login.html";
+    return;
+  }
+
+  const safeFileName = file.name.replaceAll(" ", "_");
+  const filePath = `${session.user.id}/${Date.now()}_${safeFileName}`;
+
+  const { error: uploadError } = await supabaseClient.storage
     .from("uploads")
-    .upload(fileName, file)
+    .upload(filePath, file);
+
+  if (uploadError) {
+    alert("Fehler beim Upload: " + uploadError.message);
+    return;
+  }
+
+  const arrayBuffer = await file.arrayBuffer();
+  const workbook = XLSX.read(arrayBuffer, { type: "array" });
+  const sheetName = workbook.SheetNames[0];
+  const sheet = workbook.Sheets[sheetName];
+  const rows = XLSX.utils.sheet_to_json(sheet);
+
+  const invoices = rows.map(row => ({
+    company_id: null,
+    customer_name: row.kunde,
+    invoice_number: row.rechnungsnummer,
+    amount: Number(row.betrag),
+    due_date: row.faellig_am,
+    payment_status: row.status || "offen",
+    reminder_stage: "none"
+  }));
+
+  const { error: insertError } = await supabaseClient
+    .from("invoices")
+    .insert(invoices);
+
+  if (insertError) {
+    alert("Datei hochgeladen, aber Speichern der Rechnungen fehlgeschlagen: " + insertError.message);
+    return;
+  }
+
+  alert("Upload erfolgreich. Rechnungen wurden gespeichert.");
+  await loadInvoices();
+}
+
+async function loadInvoices() {
+  const { data, error } = await supabaseClient
+    .from("invoices")
+    .select("*")
+    .order("created_at", { ascending: false });
 
   if (error) {
-    alert("Fehler beim Upload: " + error.message)
-  } else {
-    alert("Upload erfolgreich!")
-    console.log("File URL:", data.path)
+    console.error(error);
+    alert("Fehler beim Laden der Daten");
+    return;
   }
+
+  renderInvoices(data);
 }
+
+function renderInvoices(invoices) {
+  if (!statusBox) return;
+
+  if (!invoices || invoices.length === 0) {
+    statusBox.innerHTML = "<p>Noch keine Daten vorhanden.</p>";
+    return;
+  }
+
+  let html = `
+    <table style="width:100%; border-collapse: collapse;">
+      <thead>
+        <tr>
+          <th style="text-align:left; padding:10px; border-bottom:1px solid #ddd;">Kunde</th>
+          <th style="text-align:left; padding:10px; border-bottom:1px solid #ddd;">Rechnung</th>
+          <th style="text-align:left; padding:10px; border-bottom:1px solid #ddd;">Betrag</th>
+          <th style="text-align:left; padding:10px; border-bottom:1px solid #ddd;">Status</th>
+          <th style="text-align:left; padding:10px; border-bottom:1px solid #ddd;">Fällig</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  invoices.forEach(inv => {
+    html += `
+      <tr>
+        <td style="padding:10px; border-bottom:1px solid #eee;">${inv.customer_name || "-"}</td>
+        <td style="padding:10px; border-bottom:1px solid #eee;">${inv.invoice_number || "-"}</td>
+        <td style="padding:10px; border-bottom:1px solid #eee;">${inv.amount || "-"} €</td>
+        <td style="padding:10px; border-bottom:1px solid #eee;">${inv.payment_status || "-"}</td>
+        <td style="padding:10px; border-bottom:1px solid #eee;">${inv.due_date || "-"}</td>
+      </tr>
+    `;
+  });
+
+  html += "</tbody></table>";
+  statusBox.innerHTML = html;
+}
+
+if (uploadBtn) uploadBtn.addEventListener("click", uploadFile);
+if (logoutBtn) logoutBtn.addEventListener("click", logout);
+
+checkSession();
+</script>
+</body>
+</html>
 </script>
