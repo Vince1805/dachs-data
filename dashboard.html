@@ -209,17 +209,15 @@
           <button class="btn-primary" id="uploadBtn">Hochladen</button>
         </div>
       </div>
-
-     <div class="card" id="status">
+<div class="card" id="status">
   <h2>Status</h2>
   <p>Noch keine Datenuploads vorhanden. Starte oben mit dem Import deiner ersten Datei.</p>
 </div>
-
   <!-- Supabase v2 from CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+ <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
-  <script>
+<script>
 const SUPABASE_URL = "https://mmwhpcopwygabwmszdls.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1td2hwY29wd3lnYWJ3bXN6ZGxzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczMTQ4MzUsImV4cCI6MjA5Mjg5MDgzNX0.NY5SEa7i7ZUbfEWa8ZuY6xYvJSgSxijLa8rHp21FPKk";
 
@@ -310,7 +308,11 @@ async function loadInvoices() {
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.error(error);
+    console.error("Fehler beim Laden:", error);
+    statusBox.innerHTML = `
+      <h2>Status</h2>
+      <p>Fehler beim Laden der Rechnungen.</p>
+    `;
     return;
   }
 
@@ -328,6 +330,7 @@ function renderInvoices(invoices) {
 
   let html = `
     <h2>Importierte Rechnungen</h2>
+    <p>${invoices.length} Rechnungen geladen.</p>
     <table style="width:100%; border-collapse:collapse; margin-top:20px;">
       <thead>
         <tr>
@@ -353,7 +356,11 @@ function renderInvoices(invoices) {
     `;
   });
 
-  html += `</tbody></table>`;
+  html += `
+      </tbody>
+    </table>
+  `;
+
   statusBox.innerHTML = html;
 }
 
@@ -362,3 +369,6 @@ logoutBtn.addEventListener("click", logout);
 
 checkSession();
 </script>
+
+</body>
+</html>
