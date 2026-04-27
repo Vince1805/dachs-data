@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 110" role="img" aria-label="DACHS DATA">
+  <title>DACHS DATA</title>
+  <!-- Outlined "DACHS" -->
+  <text
+    x="120"
+    y="55"
+    text-anchor="middle"
+    font-family="Inter, 'Helvetica Neue', Arial, sans-serif"
+    font-weight="800"
+    font-size="48"
+    letter-spacing="4"
+    fill="none"
+    stroke="#0A2A6B"
+    stroke-width="1.6"
+  >DACHS</text>
+  <!-- Solid "DATA" -->
+  <text
+    x="120"
+    y="100"
+    text-anchor="middle"
+    font-family="Inter, 'Helvetica Neue', Arial, sans-serif"
+    font-weight="800"
+    font-size="30"
+    letter-spacing="10"
+    fill="#0A2A6B"
+  >DATA</text>
+</svg>
