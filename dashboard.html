@@ -1,1 +1,39 @@
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+<script>
+const supabaseClient = window.supabase.createClient(
+  "https://mmwhpcopwygabwmszdls.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1td2hwY29wd3lnYWJ3bXN6ZGxzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczMTQ4MzUsImV4cCI6MjA5Mjg5MDgzNX0.NY5SEa7i7ZUbfEWa8ZuY6xYvJSgSxijLa8rHp21FPKk"
+)
+
+// 🔒 check ob user eingeloggt ist
+async function checkUser() {
+  const { data } = await supabaseClient.auth.getUser()
+
+  if (!data.user) {
+    window.location.href = "/login.html"
+  } else {
+    console.log("User:", data.user.email)
+  }
+}
+
+// 🚪 logout
+async function logout() {
+  await supabaseClient.auth.signOut()
+  window.location.href = "/login.html"
+}
+
+// 📁 upload placeholder
+function uploadFile() {
+  const file = document.getElementById("fileInput").files[0]
+
+  if (!file) {
+    alert("Bitte Datei auswählen")
+    return
+  }
+
+  alert("Datei geladen: " + file.name)
+}
+
+checkUser()
+</script>
