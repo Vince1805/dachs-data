@@ -1,40 +1,303 @@
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard – DACHS DATA</title>
+  <style>
+    :root {
+      --black: #0B0B0B;
+      --white: #FFFFFF;
+      --grey: #F5F5F7;
+      --grey-2: #E5E5EA;
+      --text-muted: #6B6B70;
+      --blue: #0A2A6B;
+      --blue-hover: #08214F;
+    }
 
-<script>
-const supabaseClient = window.supabase.createClient(
-  "https://mmwhpcopwygabwmszdls.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1td2hwY29wd3lnYWJ3bXN6ZGxzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczMTQ4MzUsImV4cCI6MjA5Mjg5MDgzNX0.NY5SEa7i7ZUbfEWa8ZuY6xYvJSgSxijLa8rHp21FPKk"
-)
+    * { box-sizing: border-box; }
 
-// 🔒 Auth Check (FIX)
-async function checkUser() {
-  const { data: { session } } = await supabaseClient.auth.getSession()
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      background: var(--grey);
+      color: var(--black);
+      -webkit-font-smoothing: antialiased;
+    }
 
-  if (!session) {
-    window.location.replace("/login.html")
-  } else {
-    console.log("User logged in:", session.user.email)
-  }
-}
+    /* Loading state shown until session is confirmed */
+    #loading {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--white);
+      color: var(--text-muted);
+      font-size: 14px;
+      letter-spacing: 0.02em;
+      z-index: 100;
+    }
 
-// 🚪 Logout
-async function logout() {
-  await supabaseClient.auth.signOut()
-  window.location.replace("/login.html")
-}
+    #loading.hidden { display: none; }
 
-// 📁 Upload
-function uploadFile() {
-  const file = document.getElementById("fileInput").files[0]
+    /* Dashboard hidden by default */
+    #dashboard {
+      display: none;
+      min-height: 100vh;
+    }
 
-  if (!file) {
-    alert("Bitte Datei auswählen")
-    return
-  }
+    #dashboard.visible { display: block; }
 
-  alert("Datei geladen: " + file.name)
-}
+    .topbar {
+      background: var(--white);
+      border-bottom: 1px solid var(--grey-2);
+      padding: 18px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
 
-// 🔥 wichtig: erst laden, dann check
-window.onload = checkUser
-</script>
+    .brand {
+      font-weight: 700;
+      font-size: 18px;
+      letter-spacing: -0.01em;
+      color: var(--black);
+    }
+
+    .brand span {
+      color: var(--blue);
+    }
+
+    .user-area {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .user-email {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      font-size: 14px;
+      font-weight: 500;
+      padding: 9px 16px;
+      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    }
+
+    .btn-primary {
+      background: var(--blue);
+      color: var(--white);
+    }
+    .btn-primary:hover { background: var(--blue-hover); }
+
+    .btn-secondary {
+      background: var(--white);
+      color: var(--black);
+      border-color: var(--grey-2);
+    }
+    .btn-secondary:hover { background: var(--grey); }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 48px 32px;
+    }
+
+    h1 {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin: 0 0 8px;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 15px;
+      margin: 0 0 40px;
+    }
+
+    .card {
+      background: var(--white);
+      border: 1px solid var(--grey-2);
+      border-radius: 12px;
+      padding: 28px;
+      margin-bottom: 20px;
+    }
+
+    .card h2 {
+      font-size: 18px;
+      font-weight: 600;
+      margin: 0 0 6px;
+      letter-spacing: -0.01em;
+    }
+
+    .card p {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin: 0 0 20px;
+    }
+
+    .upload-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    input[type="file"] {
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--text-muted);
+      padding: 8px 10px;
+      border: 1px solid var(--grey-2);
+      border-radius: 8px;
+      background: var(--white);
+      max-width: 100%;
+    }
+
+    input[type="file"]::file-selector-button {
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 6px 12px;
+      margin-right: 12px;
+      border: 1px solid var(--grey-2);
+      border-radius: 6px;
+      background: var(--grey);
+      color: var(--black);
+      cursor: pointer;
+    }
+
+    @media (max-width: 600px) {
+      .topbar { padding: 14px 20px; flex-wrap: wrap; gap: 12px; }
+      .container { padding: 32px 20px; }
+      h1 { font-size: 26px; }
+      .user-email { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="loading">Lade Dashboard…</div>
+
+  <div id="dashboard">
+    <header class="topbar">
+      <div class="brand">DACHS <span>DATA</span></div>
+      <div class="user-area">
+        <span class="user-email" id="userEmail"></span>
+        <button class="btn-secondary" id="logoutBtn">Abmelden</button>
+      </div>
+    </header>
+
+    <main class="container">
+      <h1>Willkommen zurück</h1>
+      <p class="subtitle">Verwalte deine Forderungen und automatisierten Mahnprozesse.</p>
+
+      <div class="card">
+        <h2>Daten importieren</h2>
+        <p>Lade deine offenen Forderungen als Excel- oder CSV-Datei hoch.</p>
+        <div class="upload-row">
+          <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" />
+          <button class="btn-primary" id="uploadBtn">Hochladen</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Status</h2>
+        <p>Noch keine Datenuploads vorhanden. Starte oben mit dem Import deiner ersten Datei.</p>
+      </div>
+    </main>
+  </div>
+
+  <!-- Supabase v2 from CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+    // ---- Supabase config ----
+    const SUPABASE_URL = "https://mmwhpcopwygabwmszdls.supabase.co";
+    // TODO: Replace with your actual Supabase anon key from Project Settings → API
+    const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const loadingEl   = document.getElementById("loading");
+    const dashboardEl = document.getElementById("dashboard");
+    const userEmailEl = document.getElementById("userEmail");
+    const logoutBtn   = document.getElementById("logoutBtn");
+    const fileInput   = document.getElementById("fileInput");
+    const uploadBtn   = document.getElementById("uploadBtn");
+
+    async function checkSession() {
+      console.log("checking session");
+
+      const { data, error } = await supabaseClient.auth.getSession();
+
+      if (error) {
+        console.error("session error", error);
+        console.log("no session, redirecting");
+        window.location.href = "/login.html";
+        return;
+      }
+
+      const session = data && data.session;
+
+      if (!session) {
+        console.log("no session, redirecting");
+        window.location.href = "/login.html";
+        return;
+      }
+
+      console.log("session found");
+      showDashboard(session);
+    }
+
+    function showDashboard(session) {
+      const email = (session.user && session.user.email) || "Eingeloggt";
+      userEmailEl.textContent = email;
+
+      loadingEl.classList.add("hidden");
+      dashboardEl.classList.add("visible");
+    }
+
+    // Logout
+    logoutBtn.addEventListener("click", async () => {
+      try {
+        await supabaseClient.auth.signOut();
+      } catch (e) {
+        console.error("signOut error", e);
+      } finally {
+        window.location.href = "/login.html";
+      }
+    });
+
+    // File upload placeholder
+    uploadBtn.addEventListener("click", () => {
+      const file = fileInput.files && fileInput.files[0];
+      if (!file) {
+        alert("Bitte zuerst eine Datei auswählen.");
+        return;
+      }
+      alert("Ausgewählte Datei: " + file.name);
+    });
+
+    // React to auth state changes (e.g. token refresh failure / sign-out in another tab)
+    supabaseClient.auth.onAuthStateChange((event, session) => {
+      if (!session) {
+        console.log("no session, redirecting");
+        window.location.href = "/login.html";
+      }
+    });
+
+    // Kick off
+    checkSession();
+  </script>
+</body>
+</html>
