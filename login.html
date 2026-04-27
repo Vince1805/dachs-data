@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard - DACHS DATA</title>
+</head>
+<body>
+
+<h1>DACHS DATA Dashboard</h1>
+<p>Willkommen im Forderungsmanagement Cockpit.</p>
+
+<button onclick="logout()">Logout</button>
+
+<hr>
+
+<h2>Upload offener Rechnungen</h2>
+<input type="file" id="fileInput" accept=".csv,.xlsx" />
+
+<br><br>
+
+<button onclick="uploadFile()">Datei hochladen</button>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const supabaseClient = window.supabase.createClient(
+  "https://mmwhpcopwygabwmszdls.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1td2hwY29wd3lnYWJ3bXN6ZGxzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczMTQ4MzUsImV4cCI6MjA5Mjg5MDgzNX0.NY5SEa7i7ZUbfEWa8ZuY6xYvJSgSxijLa8rHp21FPKk"
+)
+
+async function checkUser() {
+  const { data } = await supabaseClient.auth.getUser()
+
+  if (!data.user) {
+    window.location.href = "/login.html"
+  }
+}
+
+async function logout() {
+  await supabaseClient.auth.signOut()
+  window.location.href = "/login.html"
+}
+
+function uploadFile() {
+  const file = document.getElementById("fileInput").files[0]
+
+  if (!file) {
+    alert("Bitte Datei auswählen")
+    return
+  }
+
+  alert("Datei ausgewählt: " + file.name)
+}
+
+checkUser()
+</script>
+
+</body>
+</html>
