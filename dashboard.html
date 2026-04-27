@@ -219,6 +219,7 @@
 
   <!-- Supabase v2 from CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
   <script>
     // ---- Supabase config ----
@@ -294,21 +295,47 @@
     return
   }
 
-  const safeFileName = file.name.replaceAll(" ", "_")
-  const filePath = `${session.user.id}/${Date.now()}_${safeFileName}`
+  const fileName = file.name.replaceAll(" ", "_")
+  const filePath = `${session.user.id}/${Date.now()}_${fileName}`
 
-  const { data, error } = await supabaseClient.storage
+  const { error: uploadError } = await supabaseClient.storage
     .from("uploads")
     .upload(filePath, file)
 
-  if (error) {
-    alert("Upload fehlgeschlagen: " + error.message)
-    console.error(error)
+  if (uploadError) {
+    alert("Upload fehlgeschlagen: " + uploadError.message)
     return
   }
 
-  alert("Upload erfolgreich: " + file.name)
-  console.log("Uploaded file:", data)
+  const arrayBuffer = await file.arrayBuffer()
+  const workbook = XLSX.read(arrayBuffer, { type: "array" })
+  const sheetName = workbook.SheetNames[0]
+  const sheet = workbook.Sheets[sheetName]
+  const rows = XLSX.utils.sheet_to_json(sheet)
+
+  const invoices = rows.map(row => ({
+    company_id: null,
+    customer_name: row.kunde,
+    invoice_number: row.rechnungsnummer,
+    amount: Number(row.betrag),
+    due_date: row.faellig_am,
+    payment_status: row.status || "offen",
+    reminder_stage: "none"
+  }))
+
+  console.log("Invoices:", invoices)
+
+  const { error: insertError } = await supabaseClient
+    .from("invoices")
+    .insert(invoices)
+
+  if (insertError) {
+    alert("Datei hochgeladen, aber Speichern der Rechnungen fehlgeschlagen: " + insertError.message)
+    console.error(insertError)
+    return
+  }
+
+  alert("Upload erfolgreich. Rechnungen wurden gespeichert.")
 })
 
     // React to auth state changes (e.g. token refresh failure / sign-out in another tab)
