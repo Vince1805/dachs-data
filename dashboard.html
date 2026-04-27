@@ -279,14 +279,37 @@
     });
 
     // File upload placeholder
-    uploadBtn.addEventListener("click", () => {
-      const file = fileInput.files && fileInput.files[0];
-      if (!file) {
-        alert("Bitte zuerst eine Datei auswählen.");
-        return;
-      }
-      alert("Ausgewählte Datei: " + file.name);
-    });
+    uploadBtn.addEventListener("click", async () => {
+  const file = fileInput.files && fileInput.files[0]
+
+  if (!file) {
+    alert("Bitte zuerst eine Datei auswählen.")
+    return
+  }
+
+  const { data: { session } } = await supabaseClient.auth.getSession()
+
+  if (!session) {
+    window.location.href = "/login.html"
+    return
+  }
+
+  const safeFileName = file.name.replaceAll(" ", "_")
+  const filePath = `${session.user.id}/${Date.now()}_${safeFileName}`
+
+  const { data, error } = await supabaseClient.storage
+    .from("uploads")
+    .upload(filePath, file)
+
+  if (error) {
+    alert("Upload fehlgeschlagen: " + error.message)
+    console.error(error)
+    return
+  }
+
+  alert("Upload erfolgreich: " + file.name)
+  console.log("Uploaded file:", data)
+})
 
     // React to auth state changes (e.g. token refresh failure / sign-out in another tab)
     supabaseClient.auth.onAuthStateChange((event, session) => {
