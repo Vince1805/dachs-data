@@ -3,57 +3,55 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard - DACHS DATA</title>
+  <title>Login - DACHS DATA</title>
 </head>
 <body>
 
-<h1>DACHS DATA Dashboard</h1>
-<p>Willkommen im Forderungsmanagement Cockpit.</p>
+<h1>DACHS DATA Login</h1>
 
-<button onclick="logout()">Logout</button>
-
-<hr>
-
-<h2>Upload offener Rechnungen</h2>
-<input type="file" id="fileInput" accept=".csv,.xlsx" />
+<input id="email" type="email" placeholder="E-Mail" />
+<input id="password" type="password" placeholder="Passwort" />
 
 <br><br>
 
-<button onclick="uploadFile()">Datei hochladen</button>
+<button onclick="signup()">Registrieren</button>
+<button onclick="login()">Einloggen</button>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
 const supabaseClient = window.supabase.createClient(
   "https://mmwhpcopwygabwmszdls.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1td2hwY29wd3lnYWJ3bXN6ZGxzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczMTQ4MzUsImV4cCI6MjA5Mjg5MDgzNX0.NY5SEa7i7ZUbfEWa8ZuY6xYvJSgSxijLa8rHp21FPKk"
+  "DEIN_ANON_KEY_HIER_EINFÜGEN"
 )
 
-async function checkUser() {
-  const { data } = await supabaseClient.auth.getUser()
+async function signup() {
+  const email = document.getElementById("email").value
+  const password = document.getElementById("password").value
 
-  if (!data.user) {
-    window.location.href = "/login.html"
-  }
-}
+  const { error } = await supabaseClient.auth.signUp({ email, password })
 
-async function logout() {
-  await supabaseClient.auth.signOut()
-  window.location.href = "/login.html"
-}
-
-function uploadFile() {
-  const file = document.getElementById("fileInput").files[0]
-
-  if (!file) {
-    alert("Bitte Datei auswählen")
+  if (error) {
+    alert(error.message)
     return
   }
 
-  alert("Datei ausgewählt: " + file.name)
+  alert("Registrierung erfolgreich. Du kannst dich jetzt einloggen.")
 }
 
-checkUser()
+async function login() {
+  const email = document.getElementById("email").value
+  const password = document.getElementById("password").value
+
+  const { error } = await supabaseClient.auth.signInWithPassword({ email, password })
+
+  if (error) {
+    alert(error.message)
+    return
+  }
+
+  window.location.href = "/dashboard.html"
+}
 </script>
 
 </body>
