@@ -210,155 +210,28 @@
         </div>
       </div>
 
-      <div class="card">
-        <h2>Status</h2>
-        <p>Noch keine Datenuploads vorhanden. Starte oben mit dem Import deiner ersten Datei.</p>
-      </div>
-    </main>
-  </div>
+     <div class="card" id="status">
+  <h2>Status</h2>
+  <p>Noch keine Datenuploads vorhanden. Starte oben mit dem Import deiner ersten Datei.</p>
+</div>
 
   <!-- Supabase v2 from CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
   <script>
-    // ---- Supabase config ----
-    const SUPABASE_URL = "https://mmwhpcopwygabwmszdls.supabase.co";
-    // TODO: Replace with your actual Supabase anon key from Project Settings → API
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1td2hwY29wd3lnYWJ3bXN6ZGxzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczMTQ4MzUsImV4cCI6MjA5Mjg5MDgzNX0.NY5SEa7i7ZUbfEWa8ZuY6xYvJSgSxijLa8rHp21FPKk";
-
-    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    const loadingEl   = document.getElementById("loading");
-    const dashboardEl = document.getElementById("dashboard");
-    const userEmailEl = document.getElementById("userEmail");
-    const logoutBtn   = document.getElementById("logoutBtn");
-    const fileInput   = document.getElementById("fileInput");
-    const uploadBtn   = document.getElementById("uploadBtn");
-
-    async function checkSession() {
-      console.log("checking session");
-
-      const { data, error } = await supabaseClient.auth.getSession();
-
-      if (error) {
-        console.error("session error", error);
-        console.log("no session, redirecting");
-        window.location.href = "/login.html";
-        return;
-      }
-
-      const session = data && data.session;
-
-      if (!session) {
-        console.log("no session, redirecting");
-        window.location.href = "/login.html";
-        return;
-      }
-
-      console.log("session found");
-      showDashboard(session);
-    }
-
-    function showDashboard(session) {
-      const email = (session.user && session.user.email) || "Eingeloggt";
-      userEmailEl.textContent = email;
-
-      loadingEl.classList.add("hidden");
-      dashboardEl.classList.add("visible");
-    }
-
-    // Logout
-    logoutBtn.addEventListener("click", async () => {
-      try {
-        await supabaseClient.auth.signOut();
-      } catch (e) {
-        console.error("signOut error", e);
-      } finally {
-        window.location.href = "/login.html";
-      }
-    });
-
-    // File upload placeholder
-    uploadBtn.addEventListener("click", async () => {
-  const file = fileInput.files && fileInput.files[0]
-
-  if (!file) {
-    alert("Bitte zuerst eine Datei auswählen.")
-    return
-  }
-
-  const { data: { session } } = await supabaseClient.auth.getSession()
-
-  if (!session) {
-    window.location.href = "/login.html"
-    return
-  }
-
-  const fileName = file.name.replaceAll(" ", "_")
-  const filePath = `${session.user.id}/${Date.now()}_${fileName}`
-
-  const { error: uploadError } = await supabaseClient.storage
-    .from("uploads")
-    .upload(filePath, file)
-
-  if (uploadError) {
-    alert("Upload fehlgeschlagen: " + uploadError.message)
-    return
-  }
-
-  const arrayBuffer = await file.arrayBuffer()
-  const workbook = XLSX.read(arrayBuffer, { type: "array" })
-  const sheetName = workbook.SheetNames[0]
-  const sheet = workbook.Sheets[sheetName]
-  const rows = XLSX.utils.sheet_to_json(sheet)
-
-  const invoices = rows.map(row => ({
-    company_id: null,
-    customer_name: row.kunde,
-    invoice_number: row.rechnungsnummer,
-    amount: Number(row.betrag),
-    due_date: row.faellig_am,
-    payment_status: row.status || "offen",
-    reminder_stage: "none"
-  }))
-
-  console.log("Invoices:", invoices)
-
-  const { error: insertError } = await supabaseClient
-    .from("invoices")
-    .insert(invoices)
-
-  if (insertError) {
-    alert("Datei hochgeladen, aber Speichern der Rechnungen fehlgeschlagen: " + insertError.message)
-    console.error(insertError)
-    return
-  }
-
-  alert("Upload erfolgreich. Rechnungen wurden gespeichert.")
-})
-
-    // React to auth state changes (e.g. token refresh failure / sign-out in another tab)
-    supabaseClient.auth.onAuthStateChange((event, session) => {
-      if (!session) {
-        console.log("no session, redirecting");
-        window.location.href = "/login.html";
-      }
-    });
-
-    // Kick off
-    checkSession();
- <script>
 const SUPABASE_URL = "https://mmwhpcopwygabwmszdls.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1td2hwY29wd3lnYWJ3bXN6ZGxzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczMTQ4MzUsImV4cCI6MjA5Mjg5MDgzNX0.NY5SEa7i7ZUbfEWa8ZuY6xYvJSgSxijLa8rHp21FPKk";
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+const loadingEl = document.getElementById("loading");
+const dashboardEl = document.getElementById("dashboard");
+const userEmailEl = document.getElementById("userEmail");
+const logoutBtn = document.getElementById("logoutBtn");
 const fileInput = document.getElementById("fileInput");
 const uploadBtn = document.getElementById("uploadBtn");
 const statusBox = document.getElementById("status");
-const userEmail = document.getElementById("userEmail");
-const logoutBtn = document.getElementById("logoutBtn");
 
 async function checkSession() {
   const { data } = await supabaseClient.auth.getSession();
@@ -368,9 +241,9 @@ async function checkSession() {
     return;
   }
 
-  if (userEmail) {
-    userEmail.textContent = data.session.user.email;
-  }
+  userEmailEl.textContent = data.session.user.email;
+  loadingEl.classList.add("hidden");
+  dashboardEl.classList.add("visible");
 
   await loadInvoices();
 }
@@ -390,11 +263,6 @@ async function uploadFile() {
 
   const { data: { session } } = await supabaseClient.auth.getSession();
 
-  if (!session) {
-    window.location.href = "/login.html";
-    return;
-  }
-
   const safeFileName = file.name.replaceAll(" ", "_");
   const filePath = `${session.user.id}/${Date.now()}_${safeFileName}`;
 
@@ -403,14 +271,13 @@ async function uploadFile() {
     .upload(filePath, file);
 
   if (uploadError) {
-    alert("Fehler beim Upload: " + uploadError.message);
+    alert("Upload fehlgeschlagen: " + uploadError.message);
     return;
   }
 
   const arrayBuffer = await file.arrayBuffer();
   const workbook = XLSX.read(arrayBuffer, { type: "array" });
-  const sheetName = workbook.SheetNames[0];
-  const sheet = workbook.Sheets[sheetName];
+  const sheet = workbook.Sheets[workbook.SheetNames[0]];
   const rows = XLSX.utils.sheet_to_json(sheet);
 
   const invoices = rows.map(row => ({
@@ -428,7 +295,7 @@ async function uploadFile() {
     .insert(invoices);
 
   if (insertError) {
-    alert("Datei hochgeladen, aber Speichern der Rechnungen fehlgeschlagen: " + insertError.message);
+    alert("Datei hochgeladen, aber Speichern fehlgeschlagen: " + insertError.message);
     return;
   }
 
@@ -444,7 +311,6 @@ async function loadInvoices() {
 
   if (error) {
     console.error(error);
-    alert("Fehler beim Laden der Daten");
     return;
   }
 
@@ -452,15 +318,17 @@ async function loadInvoices() {
 }
 
 function renderInvoices(invoices) {
-  if (!statusBox) return;
-
   if (!invoices || invoices.length === 0) {
-    statusBox.innerHTML = "<p>Noch keine Daten vorhanden.</p>";
+    statusBox.innerHTML = `
+      <h2>Status</h2>
+      <p>Noch keine Daten vorhanden.</p>
+    `;
     return;
   }
 
   let html = `
-    <table style="width:100%; border-collapse: collapse;">
+    <h2>Importierte Rechnungen</h2>
+    <table style="width:100%; border-collapse:collapse; margin-top:20px;">
       <thead>
         <tr>
           <th style="text-align:left; padding:10px; border-bottom:1px solid #ddd;">Kunde</th>
@@ -485,15 +353,12 @@ function renderInvoices(invoices) {
     `;
   });
 
-  html += "</tbody></table>";
+  html += `</tbody></table>`;
   statusBox.innerHTML = html;
 }
 
-if (uploadBtn) uploadBtn.addEventListener("click", uploadFile);
-if (logoutBtn) logoutBtn.addEventListener("click", logout);
+uploadBtn.addEventListener("click", uploadFile);
+logoutBtn.addEventListener("click", logout);
 
 checkSession();
-</script>
-</body>
-</html>
 </script>
