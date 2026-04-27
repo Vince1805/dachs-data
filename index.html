@@ -48,15 +48,12 @@
   </head>
   <body class="bg-white text-[#0B0B0B] antialiased">
     <div id="root"></div>
-
     <script type="text/babel" data-presets="react">
       const { useState, useEffect } = React;
-
       // ---------- Primitives ----------
       const Container = ({ children, className = "" }) => (
         <div className={`mx-auto w-full max-w-6xl px-6 md:px-8 ${className}`}>{children}</div>
       );
-
       const SectionLabel = ({ children, dark = false }) => (
         <span
           className={`inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] ${
@@ -67,8 +64,7 @@
           {children}
         </span>
       );
-
-      const PrimaryButton = ({ children, href = "#pilot", className = "", onClick }) => (
+      const PrimaryButton = ({ children, href = "/login.html", className = "", onClick }) => (
         <a
           href={href}
           onClick={onClick}
@@ -83,7 +79,6 @@
           </svg>
         </a>
       );
-
       const SecondaryButton = ({ children, href = "#case", dark = false, className = "" }) => (
         <a
           href={href}
@@ -96,7 +91,6 @@
           {children}
         </a>
       );
-
       // ---------- Logo (Archivo Black with stroke outline + solid DATA) ----------
       const Logo = ({ dark = false, height = 56 }) => {
         const color = dark ? "#FFFFFF" : "#0A2A6B";
@@ -130,7 +124,6 @@
           </a>
         );
       };
-
       // ---------- Hamburger Icon ----------
       const MenuIcon = ({ open }) => (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -148,7 +141,6 @@
           )}
         </svg>
       );
-
       // ---------- Nav (responsive, mobile center logo + hamburger) ----------
       const Nav = () => {
         const [scrolled, setScrolled] = useState(false);
@@ -159,10 +151,8 @@
           window.addEventListener("scroll", onScroll, { passive: true });
           return () => window.removeEventListener("scroll", onScroll);
         }, []);
-
         const closeMenu = () => setMenuOpen(false);
         const linkClass = "text-sm text-[#0B0B0B]/70 transition-colors hover:text-[#0B0B0B]";
-
         return (
           <header
             className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
@@ -179,12 +169,10 @@
               >
                 <MenuIcon open={menuOpen} />
               </button>
-
               {/* Logo: center on mobile, left on desktop */}
               <div className="flex flex-1 justify-center md:flex-none md:justify-start">
                 <Logo height={56} />
               </div>
-
               {/* Desktop nav */}
               <nav className="hidden flex-1 items-center justify-center gap-8 md:flex">
                 <a href="#problem" className={linkClass} onClick={closeMenu}>Problem</a>
@@ -192,14 +180,11 @@
                 <a href="#case" className={linkClass} onClick={closeMenu}>Case Study</a>
                 <a href="#ablauf" className={linkClass} onClick={closeMenu}>Ablauf</a>
               </nav>
-
               {/* Desktop CTA */}
-              <PrimaryButton href="#pilot" className="hidden md:inline-flex">Pilot starten</PrimaryButton>
-
+              <PrimaryButton href="/login.html" className="hidden md:inline-flex">Pilot starten</PrimaryButton>
               {/* Mobile: spacer to balance hamburger */}
               <div className="h-10 w-10 md:hidden" aria-hidden />
             </Container>
-
             {/* Mobile menu drawer */}
             <div
               className={`overflow-hidden transition-[max-height] duration-300 ease-out md:hidden ${
@@ -214,14 +199,13 @@
                   <a href="#ablauf" onClick={closeMenu} className="rounded-md px-3 py-3 text-base text-[#0B0B0B] hover:bg-black/[0.04]">Ablauf</a>
                 </nav>
                 <div className="mt-4">
-                  <PrimaryButton href="#pilot" onClick={closeMenu} className="w-full">Pilot starten</PrimaryButton>
+                  <PrimaryButton href="/login.html" onClick={closeMenu} className="w-full">Pilot starten</PrimaryButton>
                 </div>
               </Container>
             </div>
           </header>
         );
       };
-
       // ---------- Hero ----------
       const Hero = () => (
         <section id="top" className="relative overflow-hidden pt-36 pb-24 md:pt-44 md:pb-32">
@@ -241,7 +225,6 @@
             style={{ background: "radial-gradient(closest-side, #0A2A6B, transparent)" }}
             aria-hidden
           />
-
           <Container>
             <div className="mx-auto max-w-3xl text-center">
               <span
@@ -254,20 +237,16 @@
                 </span>
                 Pilotprogramm 2026 — jetzt verfügbar
               </span>
-
               <h1 className="mt-7 text-balance text-4xl font-semibold tracking-tight text-[#0B0B0B] md:text-6xl md:leading-[1.05]">
                 Stoppt Cashflow-Verluste durch <span style={{ color: "#0A2A6B" }}>manuelle Prozesse</span>
               </h1>
-
               <p className="mx-auto mt-6 max-w-2xl text-pretty text-base text-[#0B0B0B]/65 md:text-lg">
                 Wir automatisieren dein Forderungsmanagement und holen dein Geld schneller rein.
               </p>
-
               <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <PrimaryButton href="#pilot">Pilot starten</PrimaryButton>
+                <PrimaryButton href="/login.html">Pilot starten</PrimaryButton>
                 <SecondaryButton href="#case">Fallbeispiel ansehen</SecondaryButton>
               </div>
-
               <p className="mt-10 text-xs uppercase tracking-[0.18em] text-[#0B0B0B]/40">
                 Vertraut von Finance-Teams in der DACH-Region
               </p>
@@ -275,7 +254,6 @@
           </Container>
         </section>
       );
-
       // ---------- Problem ----------
       const ProblemCard = ({ icon, title, body }) => (
         <div
@@ -290,7 +268,6 @@
           <p className="mt-2 text-sm leading-relaxed text-[#0B0B0B]/60">{body}</p>
         </div>
       );
-
       const Problem = () => (
         <section id="problem" className="scroll-mt-28 border-t border-black/5 bg-white py-24 md:py-32">
           <Container>
@@ -324,7 +301,6 @@
           </Container>
         </section>
       );
-
       // ---------- Solution ----------
       const SolutionPillar = ({ index, title, body }) => (
         <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-7 backdrop-blur-sm transition-all duration-300 hover:border-white/[0.15] hover:bg-white/[0.06]">
@@ -335,7 +311,6 @@
           <p className="mt-4 text-sm leading-relaxed text-white/60">{body}</p>
         </div>
       );
-
       const Solution = () => (
         <section id="loesung" className="scroll-mt-28 py-24 md:py-32" style={{ backgroundColor: "#061A45" }}>
           <Container>
@@ -357,7 +332,6 @@
           </Container>
         </section>
       );
-
       // ---------- Case Study ----------
       const Stat = ({ value, label, accent = false }) => (
         <div
@@ -371,7 +345,6 @@
           <div className="mt-2 text-sm" style={{ color: accent ? "rgba(255,255,255,0.75)" : "rgba(11,11,11,0.6)" }}>{label}</div>
         </div>
       );
-
       const CaseStudy = () => (
         <section id="case" className="scroll-mt-28 border-t border-black/5 py-24 md:py-32" style={{ backgroundColor: "#F6F8FC" }}>
           <Container>
@@ -400,7 +373,6 @@
           </Container>
         </section>
       );
-
       // ---------- How It Works ----------
       const Step = ({ number, title, body, last = false }) => (
         <div className="relative flex-1">
@@ -412,7 +384,6 @@
           <p className="mt-2 max-w-xs text-sm leading-relaxed text-[#0B0B0B]/60">{body}</p>
         </div>
       );
-
       const HowItWorks = () => (
         <section id="ablauf" className="scroll-mt-28 border-t border-black/5 bg-white py-24 md:py-32">
           <Container>
@@ -430,7 +401,6 @@
           </Container>
         </section>
       );
-
       // ---------- Final CTA ----------
       const FinalCTA = () => (
         <section id="pilot" className="scroll-mt-28 relative overflow-hidden py-24 md:py-32" style={{ backgroundColor: "#061A45" }}>
@@ -449,7 +419,7 @@
                 Klare Analyse, sofortige Hebel, messbare Resultate — innerhalb eines Monats.
               </p>
               <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <PrimaryButton href="#kontakt">Jetzt Pilot starten</PrimaryButton>
+                <PrimaryButton href="/login.html">Jetzt Pilot starten</PrimaryButton>
                 <SecondaryButton href="#kontakt" dark>Demo vereinbaren</SecondaryButton>
               </div>
               <p className="mt-6 text-xs uppercase tracking-[0.18em] text-white/40">Keine Vertragsbindung · Setup in unter 30 Minuten</p>
@@ -457,7 +427,6 @@
           </Container>
         </section>
       );
-
       // ---------- Footer ----------
       const Footer = () => (
         <footer id="kontakt" className="border-t border-white/5 py-12" style={{ backgroundColor: "#061A45" }}>
@@ -474,7 +443,6 @@
           </Container>
         </footer>
       );
-
       // ---------- Page ----------
       function LandingPage() {
         return (
@@ -492,11 +460,8 @@
           </div>
         );
       }
-
       const root = ReactDOM.createRoot(document.getElementById("root"));
       root.render(<LandingPage />);
     </script>
   </body>
 </html>
-
-hier der alte direkt aus github 
