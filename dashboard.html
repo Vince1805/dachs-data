@@ -302,6 +302,7 @@ async function uploadFile() {
 }
 
 async function loadInvoices() {
+  console.log("🔥 loadInvoices gestartet");
   const { data, error } = await supabaseClient
     .from("invoices")
     .select("*")
