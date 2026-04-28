@@ -554,7 +554,21 @@ async function loadDocuments() {
     return;
   }
   renderDocuments(data || []);
-  async function openPdf(path) {
+  async function loadDocuments() {
+  const { data, error } = await supabaseClient
+    .from("uploaded_documents")
+    .select("*")
+    .order("created_at", { ascending:false });
+
+  if (error) {
+    console.error("Fehler beim Laden der PDFs:", error);
+    return;
+  }
+
+  renderDocuments(data || []);
+}
+
+async function openPdf(path) {
   const { data } = supabaseClient
     .storage
     .from("uploads")
@@ -564,6 +578,9 @@ async function loadDocuments() {
     alert("PDF konnte nicht geöffnet werden.");
     return;
   }
+
+  window.open(data.publicUrl, "_blank");
+}
 
   window.open(data.publicUrl, "_blank");
 }
