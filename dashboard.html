@@ -518,11 +518,27 @@ async function uploadPdf() {
     .from("uploads")
     .upload(filePath, file);
   if (uploadError) {
-    alert("PDF Upload fehlgeschlagen: " + uploadError.message);
-    return;
-  }
-  alert("PDF erfolgreich hochgeladen. Automatische Auslesung folgt im nächsten Schritt.");
-  pdfInput.value = "";
+  alert("PDF Upload fehlgeschlagen: " + uploadError.message);
+  return;
+}
+
+const { error: documentError } = await supabaseClient
+  .from("uploaded_documents")
+  .insert({
+    user_id: session.user.id,
+    file_name: file.name,
+    file_path: filePath,
+    file_type: "pdf",
+    status: "uploaded"
+  });
+
+if (documentError) {
+  alert("PDF wurde hochgeladen, aber Dokument-Eintrag fehlgeschlagen: " + documentError.message);
+  return;
+}
+
+alert("PDF erfolgreich hochgeladen und gespeichert.");
+pdfInput.value = "";
 }
 uploadBtn.addEventListener("click", uploadFile);
 pdfUploadBtn.addEventListener("click", uploadPdf);
