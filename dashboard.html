@@ -14,6 +14,9 @@
       --text-muted:#6B6B70;
       --blue:#0A2A6B;
       --blue-hover:#08214F;
+      --red:#B42318;
+      --red-bg:#FEE4E2;
+      --blue-bg:#EAF0FF;
     }
 
     * { box-sizing:border-box; }
@@ -172,8 +175,67 @@
       font-weight:700;
     }
 
+    .filter-row {
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin:18px 0 22px;
+    }
+
+    .filter-btn {
+      background:white;
+      border:1px solid var(--grey-2);
+      color:var(--black);
+      padding:8px 14px;
+      border-radius:999px;
+    }
+
+    .filter-btn.active {
+      background:var(--blue);
+      color:white;
+      border-color:var(--blue);
+    }
+
+    .badge {
+      display:inline-flex;
+      align-items:center;
+      border-radius:999px;
+      padding:4px 10px;
+      font-size:12px;
+      font-weight:600;
+    }
+
+    .badge-open {
+      background:var(--blue-bg);
+      color:var(--blue);
+    }
+
+    .badge-overdue {
+      background:var(--red-bg);
+      color:var(--red);
+    }
+
     table {
+      width:100%;
+      border-collapse:collapse;
+      margin-top:20px;
       font-size:14px;
+    }
+
+    th {
+      text-align:left;
+      padding:10px;
+      border-bottom:1px solid #ddd;
+    }
+
+    td {
+      padding:10px;
+      border-bottom:1px solid #eee;
+    }
+
+    .amount-overdue {
+      color:var(--red);
+      font-weight:600;
     }
 
     @media (max-width:700px) {
@@ -191,6 +253,12 @@
 
       .user-email {
         display:none;
+      }
+
+      table {
+        display:block;
+        overflow-x:auto;
+        white-space:nowrap;
       }
     }
   </style>
@@ -247,6 +315,9 @@ const logoutBtn = document.getElementById("logoutBtn");
 const fileInput = document.getElementById("fileInput");
 const uploadBtn = document.getElementById("uploadBtn");
 const statusBox = document.getElementById("status");
+
+let allInvoices = [];
+let currentFilter = "all";
 
 async function checkSession() {
   const { data, error } = await supabaseClient.auth.getSession();
@@ -331,11 +402,31 @@ async function loadInvoices() {
     return;
   }
 
-  renderInvoices(data);
+  allInvoices = data || [];
+  renderInvoices();
 }
 
-function renderInvoices(invoices) {
-  if (!invoices || invoices.length === 0) {
+function setFilter(filter) {
+  currentFilter = filter;
+  renderInvoices();
+}
+
+function getFilteredInvoices() {
+  if (currentFilter === "open") {
+    return allInvoices.filter(inv => inv.payment_status === "offen");
+  }
+
+  if (currentFilter === "overdue") {
+    return allInvoices.filter(inv => inv.payment_status === "überfällig");
+  }
+
+  return allInvoices;
+}
+
+function renderInvoices() {
+  const invoices = getFilteredInvoices();
+
+  if (!allInvoices || allInvoices.length === 0) {
     statusBox.innerHTML = "<h2>Status</h2><p>Noch keine Daten vorhanden.</p>";
     return;
   }
@@ -346,21 +437,14 @@ function renderInvoices(invoices) {
       currency:"EUR"
     }).format(value);
 
-  const totalAmount = invoices.reduce((sum, inv) => {
-    return sum + Number(inv.amount || 0);
-  }, 0);
-
-  const overdueInvoices = invoices.filter(inv => inv.payment_status === "überfällig");
-
-  const overdueAmount = overdueInvoices.reduce((sum, inv) => {
-    return sum + Number(inv.amount || 0);
-  }, 0);
-
-  const openInvoices = invoices.filter(inv => inv.payment_status === "offen");
+  const totalAmount = allInvoices.reduce((sum, inv) => sum + Number(inv.amount || 0), 0);
+  const overdueInvoices = allInvoices.filter(inv => inv.payment_status === "überfällig");
+  const overdueAmount = overdueInvoices.reduce((sum, inv) => sum + Number(inv.amount || 0), 0);
+  const openInvoices = allInvoices.filter(inv => inv.payment_status === "offen");
 
   let html = `
     <h2>Übersicht</h2>
-    <p>${invoices.length} Rechnungen geladen.</p>
+    <p>${allInvoices.length} Rechnungen geladen.</p>
 
     <div class="kpi-grid">
       <div class="kpi-card">
@@ -381,27 +465,54 @@ function renderInvoices(invoices) {
 
     <h2>Importierte Rechnungen</h2>
 
-    <table style="width:100%; border-collapse:collapse; margin-top:20px;">
+    <div class="filter-row">
+      <button class="filter-btn ${currentFilter === "all" ? "active" : ""}" onclick="setFilter('all')">
+        Alle (${allInvoices.length})
+      </button>
+      <button class="filter-btn ${currentFilter === "open" ? "active" : ""}" onclick="setFilter('open')">
+        Offen (${openInvoices.length})
+      </button>
+      <button class="filter-btn ${currentFilter === "overdue" ? "active" : ""}" onclick="setFilter('overdue')">
+        Überfällig (${overdueInvoices.length})
+      </button>
+    </div>
+  `;
+
+  if (invoices.length === 0) {
+    html += `<p>Keine Rechnungen für diesen Filter.</p>`;
+    statusBox.innerHTML = html;
+    return;
+  }
+
+  html += `
+    <table>
       <thead>
         <tr>
-          <th style="text-align:left; padding:10px; border-bottom:1px solid #ddd;">Kunde</th>
-          <th style="text-align:left; padding:10px; border-bottom:1px solid #ddd;">Rechnung</th>
-          <th style="text-align:left; padding:10px; border-bottom:1px solid #ddd;">Betrag</th>
-          <th style="text-align:left; padding:10px; border-bottom:1px solid #ddd;">Status</th>
-          <th style="text-align:left; padding:10px; border-bottom:1px solid #ddd;">Fällig</th>
+          <th>Kunde</th>
+          <th>Rechnung</th>
+          <th>Betrag</th>
+          <th>Status</th>
+          <th>Fällig</th>
         </tr>
       </thead>
       <tbody>
   `;
 
   invoices.forEach(inv => {
+    const status = inv.payment_status || "-";
+    const isOverdue = status === "überfällig";
+
     html += `
       <tr>
-        <td style="padding:10px; border-bottom:1px solid #eee;">${inv.customer_name || "-"}</td>
-        <td style="padding:10px; border-bottom:1px solid #eee;">${inv.invoice_number || "-"}</td>
-        <td style="padding:10px; border-bottom:1px solid #eee;">${formatEuro(Number(inv.amount || 0))}</td>
-        <td style="padding:10px; border-bottom:1px solid #eee;">${inv.payment_status || "-"}</td>
-        <td style="padding:10px; border-bottom:1px solid #eee;">${inv.due_date || "-"}</td>
+        <td>${inv.customer_name || "-"}</td>
+        <td>${inv.invoice_number || "-"}</td>
+        <td class="${isOverdue ? "amount-overdue" : ""}">${formatEuro(Number(inv.amount || 0))}</td>
+        <td>
+          <span class="badge ${isOverdue ? "badge-overdue" : "badge-open"}">
+            ${status}
+          </span>
+        </td>
+        <td>${inv.due_date || "-"}</td>
       </tr>
     `;
   });
