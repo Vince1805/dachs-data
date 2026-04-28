@@ -430,6 +430,88 @@
       white-space:nowrap;
       min-width:120px;
     }
+    .automation-grid-2 {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:14px;
+      margin-bottom:18px;
+    }
+    .automation-grid-4 {
+      display:grid;
+      grid-template-columns:repeat(4, 1fr);
+      gap:14px;
+      margin-bottom:18px;
+    }
+    .automation-field label {
+      display:block;
+      font-size:13px;
+      font-weight:500;
+      margin-bottom:6px;
+      color:var(--black);
+    }
+    .automation-field input[type="number"],
+    .automation-field select {
+      width:100%;
+      font-family:inherit;
+      font-size:14px;
+      padding:9px 12px;
+      border:1px solid var(--grey-2);
+      border-radius:8px;
+      background:white;
+      color:var(--black);
+    }
+    .automation-field input[type="number"]:focus,
+    .automation-field select:focus {
+      outline:none;
+      border-color:var(--blue);
+      box-shadow:0 0 0 3px rgba(10,42,107,0.12);
+    }
+    .automation-checkbox {
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      font-size:14px;
+      cursor:pointer;
+      user-select:none;
+    }
+    .automation-mode-pill {
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:4px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:600;
+      margin-left:8px;
+    }
+    .automation-mode-manual {
+      background:var(--blue-bg);
+      color:var(--blue);
+    }
+    .automation-mode-automatic {
+      background:#FFEDD5;
+      color:#C2410C;
+    }
+    .automation-buttons {
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .automation-summary {
+      margin-top:14px;
+      font-size:13px;
+      color:var(--text-muted);
+      white-space:pre-line;
+      padding:12px 14px;
+      background:var(--grey);
+      border:1px solid var(--grey-2);
+      border-radius:8px;
+      display:none;
+      font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .automation-summary.visible {
+      display:block;
+    }
     .reminder-action-btn:hover {
       background:var(--blue-bg);
       border-color:var(--blue);
@@ -467,6 +549,13 @@
       }
       .upload-row .btn-primary {
         width:100%;
+      }
+      .automation-grid-2,
+      .automation-grid-4 {
+        grid-template-columns:1fr 1fr;
+      }
+      .automation-buttons button {
+        flex:1;
       }
       .modal-overlay {
         padding:20px 12px;
@@ -526,6 +615,52 @@
       <p style="margin:14px 0 0; font-size:13px; color:var(--text-muted);">
         PDF hochladen → unten bei <a href="#documents" onclick="document.getElementById('documents')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); return false;" style="color:var(--blue); font-weight:600; text-decoration:underline; cursor:pointer;">Uploads</a> auf „Als Rechnung erfassen" klicken → AI liest die Rechnung aus → Mahnung erstellen → freigeben → E-Mail senden.
       </p>
+    </div>
+    <div class="card" id="automationCard">
+      <h2>
+        Automatisierung
+        <span class="automation-mode-pill automation-mode-manual" id="automationModePill">Manuell prüfen</span>
+      </h2>
+      <p>Wähle, wie das System Mahnungen erstellt und versendet. Default: Entwürfe zur manuellen Freigabe.</p>
+      <div class="automation-grid-2">
+        <div class="automation-field">
+          <label for="automationMode">Modus</label>
+          <select id="automationMode" onchange="onAutomationModeChange()">
+            <option value="manual">Manuell prüfen (nur Entwürfe)</option>
+            <option value="automatic">Vollautomatisch (sendet selbst)</option>
+          </select>
+        </div>
+        <div class="automation-field" style="display:flex; align-items:flex-end;">
+          <label class="automation-checkbox">
+            <input type="checkbox" id="automationAutoSend" />
+            Mahnungen automatisch per E-Mail senden
+          </label>
+        </div>
+      </div>
+      <div class="automation-grid-4">
+        <div class="automation-field">
+          <label for="stage1Days">Mahnstufe 1 nach (Tagen)</label>
+          <input type="number" id="stage1Days" min="1" value="7" />
+        </div>
+        <div class="automation-field">
+          <label for="stage2Days">Mahnstufe 2 nach (Tagen)</label>
+          <input type="number" id="stage2Days" min="1" value="14" />
+        </div>
+        <div class="automation-field">
+          <label for="stage3Days">Mahnstufe 3 nach (Tagen)</label>
+          <input type="number" id="stage3Days" min="1" value="30" />
+        </div>
+        <div class="automation-field">
+          <label for="inkassoDays">Inkasso prüfen ab (Tagen)</label>
+          <input type="number" id="inkassoDays" min="1" value="60" />
+        </div>
+      </div>
+      <div class="automation-buttons">
+        <button type="button" class="btn-secondary" onclick="saveAutomationSettings()">Einstellungen speichern</button>
+        <button type="button" class="btn-secondary" onclick="runReminderCycle(true)">Trockenlauf starten</button>
+        <button type="button" class="btn-primary" onclick="runReminderCycle(false)">Mahnlauf starten</button>
+      </div>
+      <div id="automationSummary" class="automation-summary"></div>
     </div>
     <div class="card" id="status">
       <h2>Status</h2>
@@ -749,6 +884,7 @@ async function checkSession() {
   await loadReminders();
   renderInvoices();
   await loadDocuments();
+  await loadAutomationSettings();
 }
 async function logout() {
   await supabaseClient.auth.signOut();
@@ -827,6 +963,161 @@ async function loadReminders() {
     return;
   }
   allReminders = data || [];
+}
+let automationSettings = {
+  reminder_mode: "manual",
+  auto_send: false,
+  stage1_days: 7,
+  stage2_days: 14,
+  stage3_days: 30,
+  inkasso_days: 60,
+};
+function applyAutomationSettingsToUI() {
+  const modeEl = document.getElementById("automationMode");
+  const autoEl = document.getElementById("automationAutoSend");
+  const s1 = document.getElementById("stage1Days");
+  const s2 = document.getElementById("stage2Days");
+  const s3 = document.getElementById("stage3Days");
+  const si = document.getElementById("inkassoDays");
+  const pill = document.getElementById("automationModePill");
+  if (!modeEl) return;
+  modeEl.value = automationSettings.reminder_mode || "manual";
+  autoEl.checked = !!automationSettings.auto_send;
+  s1.value = automationSettings.stage1_days ?? 7;
+  s2.value = automationSettings.stage2_days ?? 14;
+  s3.value = automationSettings.stage3_days ?? 30;
+  si.value = automationSettings.inkasso_days ?? 60;
+  if (pill) {
+    if (modeEl.value === "automatic") {
+      pill.textContent = "Vollautomatisch";
+      pill.classList.remove("automation-mode-manual");
+      pill.classList.add("automation-mode-automatic");
+    } else {
+      pill.textContent = "Manuell prüfen";
+      pill.classList.remove("automation-mode-automatic");
+      pill.classList.add("automation-mode-manual");
+    }
+  }
+}
+async function loadAutomationSettings() {
+  const { data, error } = await supabaseClient
+    .from("automation_settings")
+    .select("*")
+    .maybeSingle();
+  if (error) {
+    console.error("automation_settings load error:", error);
+  } else if (data) {
+    automationSettings = data;
+  }
+  applyAutomationSettingsToUI();
+}
+function onAutomationModeChange() {
+  const sel = document.getElementById("automationMode");
+  if (sel.value === "automatic") {
+    const ok = confirm(
+      "Sie aktivieren den vollautomatischen Mahnversand.\n\n" +
+      "Mahnungen können ohne weitere Freigabe an Kunden gesendet werden.\n\n" +
+      "Fortfahren?"
+    );
+    if (!ok) {
+      sel.value = "manual";
+    }
+  }
+  // Pill direkt aktualisieren (Persistenz erst beim Speichern)
+  const pill = document.getElementById("automationModePill");
+  if (pill) {
+    if (sel.value === "automatic") {
+      pill.textContent = "Vollautomatisch";
+      pill.classList.remove("automation-mode-manual");
+      pill.classList.add("automation-mode-automatic");
+    } else {
+      pill.textContent = "Manuell prüfen";
+      pill.classList.remove("automation-mode-automatic");
+      pill.classList.add("automation-mode-manual");
+    }
+  }
+}
+async function saveAutomationSettings() {
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  if (!session) {
+    window.location.href = "/login.html";
+    return;
+  }
+  const payload = {
+    user_id: session.user.id,
+    reminder_mode: document.getElementById("automationMode").value,
+    auto_send: document.getElementById("automationAutoSend").checked,
+    stage1_days: Math.max(1, Number(document.getElementById("stage1Days").value) || 7),
+    stage2_days: Math.max(1, Number(document.getElementById("stage2Days").value) || 14),
+    stage3_days: Math.max(1, Number(document.getElementById("stage3Days").value) || 30),
+    inkasso_days: Math.max(1, Number(document.getElementById("inkassoDays").value) || 60),
+    updated_at: new Date().toISOString()
+  };
+  if (!(payload.stage1_days < payload.stage2_days &&
+        payload.stage2_days < payload.stage3_days &&
+        payload.stage3_days < payload.inkasso_days)) {
+    alert("Tageswerte müssen aufsteigend sein:\nStufe 1 < Stufe 2 < Stufe 3 < Inkasso prüfen.");
+    return;
+  }
+  if (payload.reminder_mode === "automatic" && payload.auto_send) {
+    if (!confirm("Vollautomatik + auto-send: Mahnungen werden ohne weitere Freigabe an Kunden gesendet.\n\nWirklich speichern?")) {
+      return;
+    }
+  }
+  const { error } = await supabaseClient
+    .from("automation_settings")
+    .upsert(payload, { onConflict: "user_id" });
+  if (error) {
+    alert("Speichern fehlgeschlagen: " + error.message);
+    console.error(error);
+    return;
+  }
+  await loadAutomationSettings();
+  alert("Einstellungen gespeichert.");
+}
+async function runReminderCycle(dryRun) {
+  const summary = document.getElementById("automationSummary");
+  if (summary) {
+    summary.classList.add("visible");
+    summary.textContent = dryRun ? "Trockenlauf läuft…" : "Mahnlauf läuft…";
+  }
+  try {
+    const { data, error } = await supabaseClient.functions.invoke("run-reminder-cycle", {
+      body: { dry_run: !!dryRun }
+    });
+    if (error) throw new Error(error.message || "Edge Function Fehler");
+    if (!data || !data.ok) throw new Error((data && data.error) || "Mahnlauf fehlgeschlagen");
+    const lines = [
+      `Modus:        ${data.mode}${data.auto_send ? " + auto-send" : ""}`,
+      `Trockenlauf:  ${data.dry_run ? "ja" : "nein"}`,
+      `Geprüft:      ${data.checked}`,
+      `Erstellt:     ${data.created}`,
+      `Gesendet:     ${data.sent}`,
+      `Übersprungen: ${data.skipped}`
+    ];
+    if (Array.isArray(data.errors) && data.errors.length > 0) {
+      lines.push(`Fehler:       ${data.errors.length}`);
+      data.errors.slice(0, 5).forEach(e => {
+        lines.push(`  • ${e.invoice_number || e.invoice_id}: ${e.error}`);
+      });
+      if (data.errors.length > 5) {
+        lines.push(`  … und ${data.errors.length - 5} weitere`);
+      }
+    }
+    const summaryText = lines.join("\n");
+    if (summary) summary.textContent = summaryText;
+    if (!dryRun) {
+      await loadInvoices();
+      await loadReminders();
+      renderInvoices();
+    }
+    alert(summaryText);
+  } catch (e) {
+    console.error("run-reminder-cycle error:", e);
+    const msg = "Fehler: " + (e.message || e);
+    if (summary) summary.textContent = msg;
+    alert(msg);
+  }
 }
 function getReminderForInvoice(invoiceId) {
   if (!invoiceId || !Array.isArray(allReminders)) return null;
@@ -1503,6 +1794,10 @@ window.saveReminderDraft = saveReminderDraft;
 window.approveReminder = approveReminder;
 window.sendReminderEmail = sendReminderEmail;
 window.loadReminders = loadReminders;
+window.onAutomationModeChange = onAutomationModeChange;
+window.saveAutomationSettings = saveAutomationSettings;
+window.runReminderCycle = runReminderCycle;
+window.loadAutomationSettings = loadAutomationSettings;
 uploadBtn.addEventListener("click", uploadFile);
 pdfUploadBtn.addEventListener("click", uploadPdf);
 logoutBtn.addEventListener("click", logout);
