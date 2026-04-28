@@ -584,6 +584,7 @@ const pdfUploadBtn = document.getElementById("pdfUploadBtn");
 const statusBox = document.getElementById("status");
 const documentsBox = document.getElementById("documents");
 let allInvoices = [];
+let allReminders = [];
 let currentFilter = "all";
 function getDaysOverdue(dueDate) {
   if (!dueDate) return null;
@@ -711,6 +712,8 @@ async function checkSession() {
   loadingEl.classList.add("hidden");
   dashboardEl.classList.add("visible");
   await loadInvoices();
+  await loadReminders();
+  renderInvoices();
   await loadDocuments();
 }
 async function logout() {
@@ -778,6 +781,43 @@ async function loadInvoices() {
     return cleaned;
   });
   renderInvoices();
+}
+async function loadReminders() {
+  const { data, error } = await supabaseClient
+    .from("reminders")
+    .select("*")
+    .order("created_at", { ascending:false });
+  if (error) {
+    console.error("Fehler beim Laden der Reminders:", error);
+    allReminders = [];
+    return;
+  }
+  allReminders = data || [];
+}
+function getReminderForInvoice(invoiceId) {
+  if (!invoiceId || !Array.isArray(allReminders)) return null;
+  // allReminders ist nach created_at desc sortiert → erstes Match = neuester Reminder
+  return allReminders.find(r => r.invoice_id === invoiceId) || null;
+}
+function getReminderStatusLabel(invoiceId) {
+  const r = getReminderForInvoice(invoiceId);
+  if (!r) return "keine Mahnung";
+  switch (r.status) {
+    case "draft":    return "Entwurf";
+    case "approved": return "freigegeben";
+    case "sent":     return "gesendet";
+    default:         return r.status || "keine Mahnung";
+  }
+}
+function reminderStatusBadgeClass(invoiceId) {
+  const r = getReminderForInvoice(invoiceId);
+  if (!r) return "badge-nodate";
+  switch (r.status) {
+    case "draft":    return "badge-due";
+    case "approved": return "badge-paid";
+    case "sent":     return "badge-open";
+    default:         return "badge-nodate";
+  }
 }
 function setFilter(filter) {
   currentFilter = filter;
@@ -895,6 +935,7 @@ function renderInvoices() {
           <th>Betrag</th>
           <th>Status</th>
           <th>Mahnstufe</th>
+          <th>Mahnung</th>
           <th>Fällig</th>
           <th>Aktion</th>
         </tr>
@@ -906,12 +947,32 @@ function renderInvoices() {
     const isOverdue = status === "überfällig";
     const stage = inv._reminderStage || calculateReminderStage(inv);
     const stageBadge = reminderBadgeClass(stage);
+    const reminder = getReminderForInvoice(inv.id);
+    const reminderLabel = getReminderStatusLabel(inv.id);
+    const reminderBadge = reminderStatusBadgeClass(inv.id);
     const showReminderBtn = stage !== "nicht fällig" && inv.id;
-    const actionCell = showReminderBtn
-      ? `<button type="button" class="reminder-action-btn" onclick="openReminderModal('${inv.id}')">
-           Mahnung erstellen
-         </button>`
-      : `<span style="color:var(--text-muted); font-size:13px;">–</span>`;
+    let actionCell;
+    if (!showReminderBtn) {
+      actionCell = `<span style="color:var(--text-muted); font-size:13px;">–</span>`;
+    } else if (!reminder) {
+      actionCell = `<button type="button" class="reminder-action-btn" onclick="openReminderModal('${inv.id}')">
+                      Mahnung erstellen
+                    </button>`;
+    } else if (reminder.status === "draft") {
+      actionCell = `<button type="button" class="reminder-action-btn" onclick="openReminderModal('${inv.id}')">
+                      Entwurf öffnen
+                    </button>`;
+    } else if (reminder.status === "approved") {
+      actionCell = `<button type="button" class="reminder-action-btn" onclick="openReminderModal('${inv.id}')">
+                      Freigabe öffnen
+                    </button>`;
+    } else if (reminder.status === "sent") {
+      actionCell = `<span style="color:var(--text-muted); font-size:13px;">gesendet</span>`;
+    } else {
+      actionCell = `<button type="button" class="reminder-action-btn" onclick="openReminderModal('${inv.id}')">
+                      Öffnen
+                    </button>`;
+    }
     html += `
       <tr>
         <td>${inv.customer_name || "-"}</td>
@@ -925,6 +986,11 @@ function renderInvoices() {
         <td>
           <span class="badge ${stageBadge}">
             ${stage}
+          </span>
+        </td>
+        <td>
+          <span class="badge ${reminderBadge}">
+            ${reminderLabel}
           </span>
         </td>
         <td>${inv.due_date || "-"}</td>
@@ -1165,7 +1231,8 @@ function openReminderModal(invoiceId) {
     return;
   }
   currentReminderInvoice = inv;
-  currentReminderId = null;
+  const existing = getReminderForInvoice(invoiceId);
+  currentReminderId = existing ? existing.id : null;
   const stage = inv._reminderStage || calculateReminderStage(inv);
   document.getElementById("reminderCustomer").textContent = inv.customer_name || "-";
   document.getElementById("reminderInvoiceNumber").textContent = inv.invoice_number || "-";
@@ -1173,20 +1240,33 @@ function openReminderModal(invoiceId) {
   document.getElementById("reminderDueDate").textContent = inv.due_date || "-";
   document.getElementById("reminderStageLabel").textContent = stage;
   document.getElementById("reminderPaymentStatus").textContent = inv.payment_status || "-";
-  document.getElementById("reminderSubject").value = "";
-  document.getElementById("reminderBody").value = "";
-  // Tonalität anhand Mahnstufe vorbelegen
   const toneSelect = document.getElementById("reminderTone");
-  if (stage === "fällig" || stage === "Mahnstufe 1") {
-    toneSelect.value = "freundlich";
-  } else if (stage === "Mahnstufe 2") {
-    toneSelect.value = "neutral";
-  } else if (stage === "Mahnstufe 3" || stage === "Inkasso prüfen") {
-    toneSelect.value = "bestimmt";
+  if (existing) {
+    document.getElementById("reminderSubject").value = existing.subject || "";
+    document.getElementById("reminderBody").value = existing.body || "";
+    if (existing.tone) toneSelect.value = existing.tone;
+    let statusLabel;
+    switch (existing.status) {
+      case "draft":    statusLabel = "Entwurf gespeichert"; break;
+      case "approved": statusLabel = "freigegeben"; break;
+      case "sent":     statusLabel = "gesendet"; break;
+      default:         statusLabel = existing.status || "unbekannt";
+    }
+    setReminderDbStatus(statusLabel);
   } else {
-    toneSelect.value = "neutral";
+    document.getElementById("reminderSubject").value = "";
+    document.getElementById("reminderBody").value = "";
+    if (stage === "fällig" || stage === "Mahnstufe 1") {
+      toneSelect.value = "freundlich";
+    } else if (stage === "Mahnstufe 2") {
+      toneSelect.value = "neutral";
+    } else if (stage === "Mahnstufe 3" || stage === "Inkasso prüfen") {
+      toneSelect.value = "bestimmt";
+    } else {
+      toneSelect.value = "neutral";
+    }
+    setReminderDbStatus("neu — noch nicht gespeichert");
   }
-  setReminderDbStatus("neu — noch nicht gespeichert");
   document.getElementById("reminderModal").classList.add("visible");
 }
 function closeReminderModal() {
@@ -1284,6 +1364,8 @@ async function saveReminderDraft() {
   const saved = await persistReminder("draft");
   if (saved) {
     setReminderDbStatus("Entwurf gespeichert");
+    await loadReminders();
+    renderInvoices();
     alert("Entwurf gespeichert.");
   }
 }
@@ -1292,6 +1374,8 @@ async function approveReminder() {
   const saved = await persistReminder("approved");
   if (saved) {
     setReminderDbStatus("freigegeben");
+    await loadReminders();
+    renderInvoices();
     alert("Mahnung freigegeben.");
   }
 }
@@ -1304,6 +1388,7 @@ window.closeReminderModal = closeReminderModal;
 window.generateReminderText = generateReminderText;
 window.saveReminderDraft = saveReminderDraft;
 window.approveReminder = approveReminder;
+window.loadReminders = loadReminders;
 uploadBtn.addEventListener("click", uploadFile);
 pdfUploadBtn.addEventListener("click", uploadPdf);
 logoutBtn.addEventListener("click", logout);
