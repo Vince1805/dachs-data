@@ -4,74 +4,194 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard – DACHS DATA</title>
+
   <style>
     :root {
-      --black:#0B0B0B; --white:#FFFFFF; --grey:#F5F5F7; --grey-2:#E5E5EA;
-      --text-muted:#6B6B70; --blue:#0A2A6B; --blue-hover:#08214F;
+      --black:#0B0B0B;
+      --white:#FFFFFF;
+      --grey:#F5F5F7;
+      --grey-2:#E5E5EA;
+      --text-muted:#6B6B70;
+      --blue:#0A2A6B;
+      --blue-hover:#08214F;
     }
 
-    * { box-sizing: border-box; }
+    * { box-sizing:border-box; }
 
     html, body {
-      margin:0; padding:0;
+      margin:0;
+      padding:0;
       font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Roboto,sans-serif;
-      background:var(--grey); color:var(--black);
+      background:var(--grey);
+      color:var(--black);
     }
 
     #loading {
-      position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
-      background:var(--white); color:var(--text-muted); z-index:100;
+      position:fixed;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:var(--white);
+      color:var(--text-muted);
+      z-index:100;
     }
 
     #loading.hidden { display:none; }
-    #dashboard { display:none; min-height:100vh; }
+
+    #dashboard {
+      display:none;
+      min-height:100vh;
+    }
+
     #dashboard.visible { display:block; }
 
     .topbar {
-      background:var(--white); border-bottom:1px solid var(--grey-2);
-      padding:18px 32px; display:flex; justify-content:space-between; align-items:center;
+      background:var(--white);
+      border-bottom:1px solid var(--grey-2);
+      padding:18px 32px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
     }
 
-    .brand { font-weight:700; font-size:18px; }
+    .brand {
+      font-weight:700;
+      font-size:18px;
+    }
+
     .brand span { color:var(--blue); }
 
-    .user-area { display:flex; gap:16px; align-items:center; }
-    .user-email { font-size:14px; color:var(--text-muted); }
-
-    button {
-      cursor:pointer; border-radius:8px; border:1px solid transparent;
-      font-size:14px; font-weight:500; padding:9px 16px;
+    .user-area {
+      display:flex;
+      gap:16px;
+      align-items:center;
     }
 
-    .btn-primary { background:var(--blue); color:white; }
-    .btn-primary:hover { background:var(--blue-hover); }
+    .user-email {
+      font-size:14px;
+      color:var(--text-muted);
+    }
+
+    button {
+      cursor:pointer;
+      border-radius:8px;
+      border:1px solid transparent;
+      font-size:14px;
+      font-weight:500;
+      padding:9px 16px;
+      font-family:inherit;
+    }
+
+    .btn-primary {
+      background:var(--blue);
+      color:white;
+    }
+
+    .btn-primary:hover {
+      background:var(--blue-hover);
+    }
 
     .btn-secondary {
-      background:white; color:var(--black); border-color:var(--grey-2);
+      background:white;
+      color:var(--black);
+      border-color:var(--grey-2);
     }
 
     .container {
-      max-width:960px; margin:0 auto; padding:48px 32px;
+      max-width:960px;
+      margin:0 auto;
+      padding:48px 32px;
     }
 
-    h1 { font-size:32px; margin:0 0 8px; }
-    .subtitle { color:var(--text-muted); margin:0 0 40px; }
+    h1 {
+      font-size:32px;
+      margin:0 0 8px;
+    }
+
+    .subtitle {
+      color:var(--text-muted);
+      margin:0 0 40px;
+    }
 
     .card {
-      background:white; border:1px solid var(--grey-2);
-      border-radius:12px; padding:28px; margin-bottom:20px;
+      background:white;
+      border:1px solid var(--grey-2);
+      border-radius:12px;
+      padding:28px;
+      margin-bottom:20px;
     }
 
-    .card h2 { margin:0 0 6px; font-size:18px; }
-    .card p { color:var(--text-muted); margin:0 0 20px; }
+    .card h2 {
+      margin:0 0 6px;
+      font-size:18px;
+    }
+
+    .card p {
+      color:var(--text-muted);
+      margin:0 0 20px;
+    }
 
     .upload-row {
-      display:flex; gap:12px; align-items:center; flex-wrap:wrap;
+      display:flex;
+      gap:12px;
+      align-items:center;
+      flex-wrap:wrap;
     }
 
     input[type="file"] {
-      font-size:14px; padding:8px 10px; border:1px solid var(--grey-2);
-      border-radius:8px; background:white;
+      font-size:14px;
+      padding:8px 10px;
+      border:1px solid var(--grey-2);
+      border-radius:8px;
+      background:white;
+    }
+
+    .kpi-grid {
+      display:grid;
+      grid-template-columns:repeat(3, 1fr);
+      gap:14px;
+      margin-bottom:28px;
+    }
+
+    .kpi-card {
+      background:#F5F5F7;
+      border:1px solid #E5E5EA;
+      border-radius:10px;
+      padding:18px;
+    }
+
+    .kpi-label {
+      font-size:13px;
+      color:#6B6B70;
+      margin-bottom:8px;
+    }
+
+    .kpi-value {
+      font-size:24px;
+      font-weight:700;
+    }
+
+    table {
+      font-size:14px;
+    }
+
+    @media (max-width:700px) {
+      .kpi-grid {
+        grid-template-columns:1fr;
+      }
+
+      .container {
+        padding:32px 20px;
+      }
+
+      .topbar {
+        padding:14px 20px;
+      }
+
+      .user-email {
+        display:none;
+      }
     }
   </style>
 </head>
@@ -83,6 +203,7 @@
 <div id="dashboard">
   <header class="topbar">
     <div class="brand">DACHS <span>DATA</span></div>
+
     <div class="user-area">
       <span class="user-email" id="userEmail"></span>
       <button class="btn-secondary" id="logoutBtn">Abmelden</button>
@@ -96,6 +217,7 @@
     <div class="card">
       <h2>Daten importieren</h2>
       <p>Lade deine offenen Forderungen als Excel- oder CSV-Datei hoch.</p>
+
       <div class="upload-row">
         <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" />
         <button class="btn-primary" id="uploadBtn">Hochladen</button>
@@ -135,6 +257,7 @@ async function checkSession() {
   }
 
   userEmailEl.textContent = data.session.user.email;
+
   loadingEl.classList.add("hidden");
   dashboardEl.classList.add("visible");
 
@@ -169,18 +292,18 @@ async function uploadFile() {
   }
 
   const arrayBuffer = await file.arrayBuffer();
-  const workbook = XLSX.read(arrayBuffer, { type: "array" });
+  const workbook = XLSX.read(arrayBuffer, { type:"array" });
   const sheet = workbook.Sheets[workbook.SheetNames[0]];
   const rows = XLSX.utils.sheet_to_json(sheet);
 
   const invoices = rows.map(row => ({
-    company_id: null,
-    customer_name: row.kunde,
-    invoice_number: row.rechnungsnummer,
-    amount: Number(row.betrag),
-    due_date: row.faellig_am,
-    payment_status: row.status || "offen",
-    reminder_stage: "none"
+    company_id:null,
+    customer_name:row.kunde,
+    invoice_number:row.rechnungsnummer,
+    amount:Number(row.betrag),
+    due_date:row.faellig_am,
+    payment_status:row.status || "offen",
+    reminder_stage:"none"
   }));
 
   const { error: insertError } = await supabaseClient
@@ -200,7 +323,7 @@ async function loadInvoices() {
   const { data, error } = await supabaseClient
     .from("invoices")
     .select("*")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending:false });
 
   if (error) {
     console.error(error);
@@ -217,9 +340,47 @@ function renderInvoices(invoices) {
     return;
   }
 
+  const formatEuro = value =>
+    new Intl.NumberFormat("de-DE", {
+      style:"currency",
+      currency:"EUR"
+    }).format(value);
+
+  const totalAmount = invoices.reduce((sum, inv) => {
+    return sum + Number(inv.amount || 0);
+  }, 0);
+
+  const overdueInvoices = invoices.filter(inv => inv.payment_status === "überfällig");
+
+  const overdueAmount = overdueInvoices.reduce((sum, inv) => {
+    return sum + Number(inv.amount || 0);
+  }, 0);
+
+  const openInvoices = invoices.filter(inv => inv.payment_status === "offen");
+
   let html = `
-    <h2>Importierte Rechnungen</h2>
+    <h2>Übersicht</h2>
     <p>${invoices.length} Rechnungen geladen.</p>
+
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Gesamtforderungen</div>
+        <div class="kpi-value">${formatEuro(totalAmount)}</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-label">Überfällig</div>
+        <div class="kpi-value">${formatEuro(overdueAmount)}</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-label">Offene Rechnungen</div>
+        <div class="kpi-value">${openInvoices.length}</div>
+      </div>
+    </div>
+
+    <h2>Importierte Rechnungen</h2>
+
     <table style="width:100%; border-collapse:collapse; margin-top:20px;">
       <thead>
         <tr>
@@ -238,14 +399,18 @@ function renderInvoices(invoices) {
       <tr>
         <td style="padding:10px; border-bottom:1px solid #eee;">${inv.customer_name || "-"}</td>
         <td style="padding:10px; border-bottom:1px solid #eee;">${inv.invoice_number || "-"}</td>
-        <td style="padding:10px; border-bottom:1px solid #eee;">${inv.amount || "-"} €</td>
+        <td style="padding:10px; border-bottom:1px solid #eee;">${formatEuro(Number(inv.amount || 0))}</td>
         <td style="padding:10px; border-bottom:1px solid #eee;">${inv.payment_status || "-"}</td>
         <td style="padding:10px; border-bottom:1px solid #eee;">${inv.due_date || "-"}</td>
       </tr>
     `;
   });
 
-  html += "</tbody></table>";
+  html += `
+      </tbody>
+    </table>
+  `;
+
   statusBox.innerHTML = html;
 }
 
