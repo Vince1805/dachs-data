@@ -261,6 +261,146 @@
       color:var(--red);
       font-weight:600;
     }
+    .modal-overlay {
+      position:fixed;
+      inset:0;
+      background:rgba(11,11,11,0.55);
+      display:none;
+      align-items:flex-start;
+      justify-content:center;
+      z-index:200;
+      padding:40px 20px;
+      overflow-y:auto;
+    }
+    .modal-overlay.visible {
+      display:flex;
+    }
+    .modal {
+      background:white;
+      border-radius:14px;
+      max-width:640px;
+      width:100%;
+      box-shadow:0 24px 60px -16px rgba(11,11,11,0.35);
+      display:flex;
+      flex-direction:column;
+      max-height:calc(100vh - 80px);
+    }
+    .modal-header {
+      padding:20px 24px;
+      border-bottom:1px solid var(--grey-2);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+    }
+    .modal-header h2 {
+      margin:0;
+      font-size:18px;
+      font-weight:600;
+    }
+    .modal-close {
+      background:transparent;
+      border:none;
+      font-size:24px;
+      cursor:pointer;
+      width:32px;
+      height:32px;
+      padding:0;
+      color:var(--text-muted);
+      border-radius:8px;
+    }
+    .modal-close:hover {
+      background:var(--grey);
+    }
+    .modal-body {
+      padding:24px;
+      overflow-y:auto;
+    }
+    .modal-footer {
+      padding:16px 24px;
+      border-top:1px solid var(--grey-2);
+      display:flex;
+      gap:10px;
+      justify-content:flex-end;
+      flex-wrap:wrap;
+    }
+    .invoice-summary {
+      background:var(--grey);
+      border:1px solid var(--grey-2);
+      border-radius:10px;
+      padding:14px 16px;
+      margin-bottom:20px;
+      font-size:14px;
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:8px 16px;
+    }
+    .invoice-summary > div {
+      min-width:0;
+    }
+    .invoice-summary .label {
+      color:var(--text-muted);
+      font-size:12px;
+      margin-bottom:2px;
+    }
+    .invoice-summary .value {
+      font-weight:500;
+      word-break:break-word;
+    }
+    .modal-field {
+      margin-bottom:14px;
+    }
+    .modal-field label {
+      display:block;
+      font-size:13px;
+      font-weight:500;
+      margin-bottom:6px;
+    }
+    .modal-field input[type="text"],
+    .modal-field select,
+    .modal-field textarea {
+      width:100%;
+      font-family:inherit;
+      font-size:14px;
+      padding:10px 12px;
+      border:1px solid var(--grey-2);
+      border-radius:8px;
+      background:white;
+      color:var(--black);
+    }
+    .modal-field input[type="text"]:focus,
+    .modal-field select:focus,
+    .modal-field textarea:focus {
+      outline:none;
+      border-color:var(--blue);
+      box-shadow:0 0 0 3px rgba(10,42,107,0.12);
+    }
+    .modal-field textarea {
+      resize:vertical;
+      min-height:200px;
+      line-height:1.5;
+    }
+    .modal-status {
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      font-size:13px;
+      color:var(--text-muted);
+      margin-bottom:14px;
+    }
+    .reminder-action-btn {
+      background:white;
+      color:var(--blue);
+      border:1px solid var(--grey-2);
+      padding:6px 12px;
+      border-radius:8px;
+      font-size:13px;
+      font-weight:500;
+      cursor:pointer;
+    }
+    .reminder-action-btn:hover {
+      background:var(--blue-bg);
+      border-color:var(--blue);
+    }
     @media (max-width:700px) {
       .kpi-grid {
         grid-template-columns:1fr;
@@ -293,6 +433,18 @@
         align-items:stretch;
       }
       .upload-row .btn-primary {
+        width:100%;
+      }
+      .modal-overlay {
+        padding:20px 12px;
+      }
+      .invoice-summary {
+        grid-template-columns:1fr;
+      }
+      .modal-footer {
+        flex-direction:column-reverse;
+      }
+      .modal-footer button {
         width:100%;
       }
     }
@@ -351,6 +503,69 @@
       <p>Noch keine PDFs hochgeladen.</p>
     </div>
   </main>
+</div>
+<div id="reminderModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="reminderModalTitle">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="reminderModalTitle">Mahnung erstellen</h2>
+      <button class="modal-close" type="button" aria-label="Schließen" onclick="closeReminderModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="invoice-summary">
+        <div>
+          <div class="label">Kunde</div>
+          <div class="value" id="reminderCustomer">-</div>
+        </div>
+        <div>
+          <div class="label">Rechnungsnummer</div>
+          <div class="value" id="reminderInvoiceNumber">-</div>
+        </div>
+        <div>
+          <div class="label">Betrag</div>
+          <div class="value" id="reminderAmount">-</div>
+        </div>
+        <div>
+          <div class="label">Fälligkeitsdatum</div>
+          <div class="value" id="reminderDueDate">-</div>
+        </div>
+        <div>
+          <div class="label">Mahnstufe</div>
+          <div class="value" id="reminderStageLabel">-</div>
+        </div>
+        <div>
+          <div class="label">Zahlungsstatus</div>
+          <div class="value" id="reminderPaymentStatus">-</div>
+        </div>
+      </div>
+      <div class="modal-status">
+        Status:&nbsp;<span id="reminderDbStatus">neu — noch nicht gespeichert</span>
+      </div>
+      <div class="modal-field">
+        <label for="reminderTone">Tonalität</label>
+        <select id="reminderTone">
+          <option value="freundlich">freundlich (für Mahnstufe 1)</option>
+          <option value="neutral">neutral (für Mahnstufe 2)</option>
+          <option value="bestimmt">bestimmt (für Mahnstufe 3+)</option>
+        </select>
+      </div>
+      <button type="button" class="btn-primary" id="reminderGenerateBtn" onclick="generateReminderText()" style="margin-bottom:18px;">
+        AI-Mahntext generieren
+      </button>
+      <div class="modal-field">
+        <label for="reminderSubject">Betreff</label>
+        <input type="text" id="reminderSubject" placeholder="z. B. Zahlungserinnerung Rechnung Nr. ..." />
+      </div>
+      <div class="modal-field">
+        <label for="reminderBody">Mahntext</label>
+        <textarea id="reminderBody" placeholder="Hier wird der generierte Text eingefügt — du kannst ihn vor Speicherung beliebig anpassen."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-secondary" onclick="closeReminderModal()">Schließen</button>
+      <button type="button" class="btn-secondary" onclick="saveReminderDraft()">Entwurf speichern</button>
+      <button type="button" class="btn-primary" onclick="approveReminder()">Freigeben</button>
+    </div>
+  </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
@@ -681,6 +896,7 @@ function renderInvoices() {
           <th>Status</th>
           <th>Mahnstufe</th>
           <th>Fällig</th>
+          <th>Aktion</th>
         </tr>
       </thead>
       <tbody>
@@ -690,6 +906,12 @@ function renderInvoices() {
     const isOverdue = status === "überfällig";
     const stage = inv._reminderStage || calculateReminderStage(inv);
     const stageBadge = reminderBadgeClass(stage);
+    const showReminderBtn = stage !== "nicht fällig" && inv.id;
+    const actionCell = showReminderBtn
+      ? `<button type="button" class="reminder-action-btn" onclick="openReminderModal('${inv.id}')">
+           Mahnung erstellen
+         </button>`
+      : `<span style="color:var(--text-muted); font-size:13px;">–</span>`;
     html += `
       <tr>
         <td>${inv.customer_name || "-"}</td>
@@ -706,6 +928,7 @@ function renderInvoices() {
           </span>
         </td>
         <td>${inv.due_date || "-"}</td>
+        <td>${actionCell}</td>
       </tr>
     `;
   });
@@ -924,10 +1147,163 @@ async function saveParsedInvoice(parsed, filePath) {
   await loadInvoices();
   await loadDocuments();
 }
+let currentReminderInvoice = null;
+let currentReminderId = null;
+function formatEuroValue(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return "-";
+  return new Intl.NumberFormat("de-DE", { style:"currency", currency:"EUR" }).format(n);
+}
+function setReminderDbStatus(text) {
+  const el = document.getElementById("reminderDbStatus");
+  if (el) el.textContent = text;
+}
+function openReminderModal(invoiceId) {
+  const inv = allInvoices.find(i => i.id === invoiceId);
+  if (!inv) {
+    alert("Rechnung nicht gefunden.");
+    return;
+  }
+  currentReminderInvoice = inv;
+  currentReminderId = null;
+  const stage = inv._reminderStage || calculateReminderStage(inv);
+  document.getElementById("reminderCustomer").textContent = inv.customer_name || "-";
+  document.getElementById("reminderInvoiceNumber").textContent = inv.invoice_number || "-";
+  document.getElementById("reminderAmount").textContent = formatEuroValue(inv.amount);
+  document.getElementById("reminderDueDate").textContent = inv.due_date || "-";
+  document.getElementById("reminderStageLabel").textContent = stage;
+  document.getElementById("reminderPaymentStatus").textContent = inv.payment_status || "-";
+  document.getElementById("reminderSubject").value = "";
+  document.getElementById("reminderBody").value = "";
+  // Tonalität anhand Mahnstufe vorbelegen
+  const toneSelect = document.getElementById("reminderTone");
+  if (stage === "fällig" || stage === "Mahnstufe 1") {
+    toneSelect.value = "freundlich";
+  } else if (stage === "Mahnstufe 2") {
+    toneSelect.value = "neutral";
+  } else if (stage === "Mahnstufe 3" || stage === "Inkasso prüfen") {
+    toneSelect.value = "bestimmt";
+  } else {
+    toneSelect.value = "neutral";
+  }
+  setReminderDbStatus("neu — noch nicht gespeichert");
+  document.getElementById("reminderModal").classList.add("visible");
+}
+function closeReminderModal() {
+  document.getElementById("reminderModal").classList.remove("visible");
+  currentReminderInvoice = null;
+  currentReminderId = null;
+}
+async function generateReminderText() {
+  if (!currentReminderInvoice) return;
+  const tone = document.getElementById("reminderTone").value;
+  const stage = currentReminderInvoice._reminderStage || calculateReminderStage(currentReminderInvoice);
+  const btn = document.getElementById("reminderGenerateBtn");
+  if (btn) { btn.disabled = true; btn.textContent = "Generiere…"; }
+  setReminderDbStatus("AI generiert Mahntext…");
+  try {
+    const { data, error } = await supabaseClient.functions.invoke("generate-reminder", {
+      body: {
+        invoice: {
+          id: currentReminderInvoice.id,
+          customer_name: currentReminderInvoice.customer_name,
+          customer_email: currentReminderInvoice.customer_email || null,
+          invoice_number: currentReminderInvoice.invoice_number,
+          amount: currentReminderInvoice.amount,
+          due_date: currentReminderInvoice.due_date,
+          payment_status: currentReminderInvoice.payment_status
+        },
+        reminder_stage: stage,
+        tone: tone
+      }
+    });
+    if (error) throw new Error(error.message || "Edge Function Fehler");
+    if (!data || !data.ok) throw new Error((data && data.error) || "AI-Generierung fehlgeschlagen");
+    document.getElementById("reminderSubject").value = data.subject || "";
+    document.getElementById("reminderBody").value = data.body || "";
+    setReminderDbStatus("Entwurf generiert — noch nicht gespeichert");
+  } catch (e) {
+    console.error("generate-reminder error:", e);
+    alert("Mahntext konnte nicht generiert werden: " + (e.message || e));
+    setReminderDbStatus("Fehler bei AI-Generierung");
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = "AI-Mahntext generieren"; }
+  }
+}
+async function persistReminder(targetStatus) {
+  if (!currentReminderInvoice) return null;
+  const subject = document.getElementById("reminderSubject").value.trim();
+  const body = document.getElementById("reminderBody").value.trim();
+  const tone = document.getElementById("reminderTone").value;
+  const stage = currentReminderInvoice._reminderStage || calculateReminderStage(currentReminderInvoice);
+  if (!body) {
+    alert("Bitte Mahntext ausfüllen oder generieren.");
+    return null;
+  }
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  if (!session) {
+    window.location.href = "/login.html";
+    return null;
+  }
+  const payload = {
+    invoice_id: currentReminderInvoice.id,
+    user_id: session.user.id,
+    reminder_stage: stage,
+    tone: tone,
+    subject: subject || null,
+    body: body,
+    status: targetStatus
+  };
+  if (targetStatus === "approved") {
+    payload.approved_at = new Date().toISOString();
+  }
+  let result;
+  if (currentReminderId) {
+    result = await supabaseClient
+      .from("reminders")
+      .update(payload)
+      .eq("id", currentReminderId)
+      .select()
+      .single();
+  } else {
+    result = await supabaseClient
+      .from("reminders")
+      .insert(payload)
+      .select()
+      .single();
+  }
+  if (result.error) {
+    console.error("reminders persist error:", result.error);
+    alert("Speichern fehlgeschlagen: " + result.error.message);
+    return null;
+  }
+  currentReminderId = result.data.id;
+  return result.data;
+}
+async function saveReminderDraft() {
+  const saved = await persistReminder("draft");
+  if (saved) {
+    setReminderDbStatus("Entwurf gespeichert");
+    alert("Entwurf gespeichert.");
+  }
+}
+async function approveReminder() {
+  if (!confirm("Mahnung wirklich freigeben?")) return;
+  const saved = await persistReminder("approved");
+  if (saved) {
+    setReminderDbStatus("freigegeben");
+    alert("Mahnung freigegeben.");
+  }
+}
 window.openPdf = openPdf;
 window.setFilter = setFilter;
 window.manualParsePdf = manualParsePdf;
 window.fallbackManualParsePdf = fallbackManualParsePdf;
+window.openReminderModal = openReminderModal;
+window.closeReminderModal = closeReminderModal;
+window.generateReminderText = generateReminderText;
+window.saveReminderDraft = saveReminderDraft;
+window.approveReminder = approveReminder;
 uploadBtn.addEventListener("click", uploadFile);
 pdfUploadBtn.addEventListener("click", uploadPdf);
 logoutBtn.addEventListener("click", logout);
