@@ -6,220 +6,115 @@
   <title>Dashboard – DACHS DATA</title>
   <style>
     :root {
-      --black: #0B0B0B;
-      --white: #FFFFFF;
-      --grey: #F5F5F7;
-      --grey-2: #E5E5EA;
-      --text-muted: #6B6B70;
-      --blue: #0A2A6B;
-      --blue-hover: #08214F;
+      --black:#0B0B0B; --white:#FFFFFF; --grey:#F5F5F7; --grey-2:#E5E5EA;
+      --text-muted:#6B6B70; --blue:#0A2A6B; --blue-hover:#08214F;
     }
 
     * { box-sizing: border-box; }
 
     html, body {
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
-      background: var(--grey);
-      color: var(--black);
-      -webkit-font-smoothing: antialiased;
+      margin:0; padding:0;
+      font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Roboto,sans-serif;
+      background:var(--grey); color:var(--black);
     }
 
-    /* Loading state shown until session is confirmed */
     #loading {
-      position: fixed;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--white);
-      color: var(--text-muted);
-      font-size: 14px;
-      letter-spacing: 0.02em;
-      z-index: 100;
+      position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+      background:var(--white); color:var(--text-muted); z-index:100;
     }
 
-    #loading.hidden { display: none; }
-
-    /* Dashboard hidden by default */
-    #dashboard {
-      display: none;
-      min-height: 100vh;
-    }
-
-    #dashboard.visible { display: block; }
+    #loading.hidden { display:none; }
+    #dashboard { display:none; min-height:100vh; }
+    #dashboard.visible { display:block; }
 
     .topbar {
-      background: var(--white);
-      border-bottom: 1px solid var(--grey-2);
-      padding: 18px 32px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      background:var(--white); border-bottom:1px solid var(--grey-2);
+      padding:18px 32px; display:flex; justify-content:space-between; align-items:center;
     }
 
-    .brand {
-      font-weight: 700;
-      font-size: 18px;
-      letter-spacing: -0.01em;
-      color: var(--black);
-    }
+    .brand { font-weight:700; font-size:18px; }
+    .brand span { color:var(--blue); }
 
-    .brand span {
-      color: var(--blue);
-    }
-
-    .user-area {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .user-email {
-      font-size: 14px;
-      color: var(--text-muted);
-    }
+    .user-area { display:flex; gap:16px; align-items:center; }
+    .user-email { font-size:14px; color:var(--text-muted); }
 
     button {
-      font-family: inherit;
-      cursor: pointer;
-      border-radius: 8px;
-      border: 1px solid transparent;
-      font-size: 14px;
-      font-weight: 500;
-      padding: 9px 16px;
-      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+      cursor:pointer; border-radius:8px; border:1px solid transparent;
+      font-size:14px; font-weight:500; padding:9px 16px;
     }
 
-    .btn-primary {
-      background: var(--blue);
-      color: var(--white);
-    }
-    .btn-primary:hover { background: var(--blue-hover); }
+    .btn-primary { background:var(--blue); color:white; }
+    .btn-primary:hover { background:var(--blue-hover); }
 
     .btn-secondary {
-      background: var(--white);
-      color: var(--black);
-      border-color: var(--grey-2);
+      background:white; color:var(--black); border-color:var(--grey-2);
     }
-    .btn-secondary:hover { background: var(--grey); }
 
     .container {
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 48px 32px;
+      max-width:960px; margin:0 auto; padding:48px 32px;
     }
 
-    h1 {
-      font-size: 32px;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      margin: 0 0 8px;
-    }
-
-    .subtitle {
-      color: var(--text-muted);
-      font-size: 15px;
-      margin: 0 0 40px;
-    }
+    h1 { font-size:32px; margin:0 0 8px; }
+    .subtitle { color:var(--text-muted); margin:0 0 40px; }
 
     .card {
-      background: var(--white);
-      border: 1px solid var(--grey-2);
-      border-radius: 12px;
-      padding: 28px;
-      margin-bottom: 20px;
+      background:white; border:1px solid var(--grey-2);
+      border-radius:12px; padding:28px; margin-bottom:20px;
     }
 
-    .card h2 {
-      font-size: 18px;
-      font-weight: 600;
-      margin: 0 0 6px;
-      letter-spacing: -0.01em;
-    }
-
-    .card p {
-      color: var(--text-muted);
-      font-size: 14px;
-      margin: 0 0 20px;
-    }
+    .card h2 { margin:0 0 6px; font-size:18px; }
+    .card p { color:var(--text-muted); margin:0 0 20px; }
 
     .upload-row {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      flex-wrap: wrap;
+      display:flex; gap:12px; align-items:center; flex-wrap:wrap;
     }
 
     input[type="file"] {
-      font-family: inherit;
-      font-size: 14px;
-      color: var(--text-muted);
-      padding: 8px 10px;
-      border: 1px solid var(--grey-2);
-      border-radius: 8px;
-      background: var(--white);
-      max-width: 100%;
-    }
-
-    input[type="file"]::file-selector-button {
-      font-family: inherit;
-      font-size: 13px;
-      font-weight: 500;
-      padding: 6px 12px;
-      margin-right: 12px;
-      border: 1px solid var(--grey-2);
-      border-radius: 6px;
-      background: var(--grey);
-      color: var(--black);
-      cursor: pointer;
-    }
-
-    @media (max-width: 600px) {
-      .topbar { padding: 14px 20px; flex-wrap: wrap; gap: 12px; }
-      .container { padding: 32px 20px; }
-      h1 { font-size: 26px; }
-      .user-email { display: none; }
+      font-size:14px; padding:8px 10px; border:1px solid var(--grey-2);
+      border-radius:8px; background:white;
     }
   </style>
 </head>
+
 <body>
 
-  <div id="loading">Lade Dashboard…</div>
+<div id="loading">Lade Dashboard…</div>
 
-  <div id="dashboard">
-    <header class="topbar">
-      <div class="brand">DACHS <span>DATA</span></div>
-      <div class="user-area">
-        <span class="user-email" id="userEmail"></span>
-        <button class="btn-secondary" id="logoutBtn">Abmelden</button>
+<div id="dashboard">
+  <header class="topbar">
+    <div class="brand">DACHS <span>DATA</span></div>
+    <div class="user-area">
+      <span class="user-email" id="userEmail"></span>
+      <button class="btn-secondary" id="logoutBtn">Abmelden</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <h1>Willkommen zurück</h1>
+    <p class="subtitle">Verwalte deine Forderungen und automatisierten Mahnprozesse.</p>
+
+    <div class="card">
+      <h2>Daten importieren</h2>
+      <p>Lade deine offenen Forderungen als Excel- oder CSV-Datei hoch.</p>
+      <div class="upload-row">
+        <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" />
+        <button class="btn-primary" id="uploadBtn">Hochladen</button>
       </div>
-    </header>
+    </div>
 
-    <main class="container">
-      <h1>Willkommen zurück</h1>
-      <p class="subtitle">Verwalte deine Forderungen und automatisierten Mahnprozesse.</p>
-
-      <div class="card">
-        <h2>Daten importieren</h2>
-        <p>Lade deine offenen Forderungen als Excel- oder CSV-Datei hoch.</p>
-        <div class="upload-row">
-          <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" />
-          <button class="btn-primary" id="uploadBtn">Hochladen</button>
-        </div>
-      </div>
-<div class="card" id="status">
-  <h2>Status</h2>
-  <p>Noch keine Datenuploads vorhanden. Starte oben mit dem Import deiner ersten Datei.</p>
+    <div class="card" id="status">
+      <h2>Status</h2>
+      <p>Noch keine Daten vorhanden.</p>
+    </div>
+  </main>
 </div>
-  <!-- Supabase v2 from CDN -->
- <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
 <script>
 const SUPABASE_URL = "https://mmwhpcopwygabwmszdls.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1td2hwY29wd3lnYWJ3bXN6ZGxzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczMTQ4MzUsImV4cCI6MjA5Mjg5MDgzNX0.NY5SEa7i7ZUbfEWa8ZuY6xYvJSgSxijLa8rHp21FPKk";
+const SUPABASE_ANON_KEY = "DEIN_ECHTER_ANON_KEY";
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -232,9 +127,9 @@ const uploadBtn = document.getElementById("uploadBtn");
 const statusBox = document.getElementById("status");
 
 async function checkSession() {
-  const { data } = await supabaseClient.auth.getSession();
+  const { data, error } = await supabaseClient.auth.getSession();
 
-  if (!data.session) {
+  if (error || !data.session) {
     window.location.href = "/login.html";
     return;
   }
@@ -252,7 +147,7 @@ async function logout() {
 }
 
 async function uploadFile() {
-  const file = fileInput.files && fileInput.files[0];
+  const file = fileInput.files[0];
 
   if (!file) {
     alert("Bitte Datei auswählen");
@@ -302,18 +197,14 @@ async function uploadFile() {
 }
 
 async function loadInvoices() {
-  console.log("🔥 loadInvoices gestartet");
   const { data, error } = await supabaseClient
     .from("invoices")
     .select("*")
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("Fehler beim Laden:", error);
-    statusBox.innerHTML = `
-      <h2>Status</h2>
-      <p>Fehler beim Laden der Rechnungen.</p>
-    `;
+    console.error(error);
+    statusBox.innerHTML = "<h2>Status</h2><p>Fehler beim Laden der Rechnungen.</p>";
     return;
   }
 
@@ -322,10 +213,7 @@ async function loadInvoices() {
 
 function renderInvoices(invoices) {
   if (!invoices || invoices.length === 0) {
-    statusBox.innerHTML = `
-      <h2>Status</h2>
-      <p>Noch keine Daten vorhanden.</p>
-    `;
+    statusBox.innerHTML = "<h2>Status</h2><p>Noch keine Daten vorhanden.</p>";
     return;
   }
 
@@ -357,11 +245,7 @@ function renderInvoices(invoices) {
     `;
   });
 
-  html += `
-      </tbody>
-    </table>
-  `;
-
+  html += "</tbody></table>";
   statusBox.innerHTML = html;
 }
 
@@ -369,23 +253,6 @@ uploadBtn.addEventListener("click", uploadFile);
 logoutBtn.addEventListener("click", logout);
 
 checkSession();
-async function checkSession() {
-  const { data } = await supabaseClient.auth.getSession();
-
-  if (!data.session) {
-    window.location.href = "/login.html";
-    return;
-  }
-
-  userEmailEl.textContent = data.session.user.email;
-
-  loadingEl.classList.add("hidden");
-  dashboardEl.classList.add("visible");
-
-  console.log("✅ Session OK");
-
-  await loadInvoices();   // 🔥 DAS IST ENTSCHEIDEND
-}
 </script>
 
 </body>
