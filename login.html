@@ -4,10 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Login – DACHS DATA</title>
+  <link rel="icon" href="dachs-data-logo.svg" type="image/svg+xml" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&display=swap"
     rel="stylesheet"
   />
   <style>
@@ -56,14 +57,18 @@
     }
 
     .brand {
-      display: inline-block;
-      font-weight: 700;
-      font-size: 18px;
-      letter-spacing: -0.01em;
-      color: var(--black);
+      display: inline-flex;
+      align-items: center;
+      color: var(--blue);
       text-decoration: none;
+      line-height: 0;
     }
-    .brand span { color: var(--blue); }
+    .brand svg {
+      display: block;
+      overflow: visible;
+      height: 48px;
+      width: auto;
+    }
 
     main.center {
       flex: 1;
@@ -230,7 +235,23 @@
 <body>
 
   <header class="topbar">
-    <a href="/" class="brand">DACHS <span>DATA</span></a>
+    <a href="/" class="brand" aria-label="DACHS DATA — Startseite">
+      <svg viewBox="0 0 360 160" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <text
+          x="180" y="80" text-anchor="middle"
+          font-family="'Archivo Black', 'Helvetica Neue', Arial, sans-serif"
+          font-weight="400" font-size="80" letter-spacing="2"
+          fill="none" stroke="currentColor" stroke-width="2.2"
+          stroke-linejoin="round" paint-order="stroke fill"
+        >DACHS</text>
+        <text
+          x="180" y="140" text-anchor="middle"
+          font-family="'Archivo Black', 'Helvetica Neue', Arial, sans-serif"
+          font-weight="400" font-size="40" letter-spacing="14"
+          fill="currentColor"
+        >DATA</text>
+      </svg>
+    </a>
   </header>
 
   <main class="center">
