@@ -911,6 +911,7 @@ async function uploadFile() {
   const sheet = workbook.Sheets[workbook.SheetNames[0]];
   const rows = XLSX.utils.sheet_to_json(sheet, { raw:true });
   const invoices = rows.map(row => ({
+    user_id: session.user.id,
     company_id:null,
     customer_name:fixMojibake(row.kunde),
     invoice_number:fixMojibake(row.rechnungsnummer),
@@ -1615,9 +1616,15 @@ async function fallbackManualParsePdf(fileName, filePath) {
   }, filePath);
 }
 async function saveParsedInvoice(parsed, filePath) {
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  if (!session) {
+    window.location.href = "/login.html";
+    return;
+  }
   const { error } = await supabaseClient
     .from("invoices")
     .insert({
+      user_id: session.user.id,
       company_id: null,
       customer_name: parsed.customer_name || "",
       customer_email: parsed.customer_email || null,
