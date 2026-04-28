@@ -342,6 +342,23 @@ const statusBox = document.getElementById("status");
 const documentsBox = document.getElementById("documents");
 let allInvoices = [];
 let currentFilter = "all";
+function fixMojibake(value) {
+  if (typeof value !== "string") return value;
+  // Schnelltest: enthält der String typische Mojibake-Marker?
+  if (!/[ÃÂâ]/.test(value)) return value;
+  try {
+    const bytes = new Uint8Array(value.length);
+    for (let i = 0; i < value.length; i++) {
+      const code = value.charCodeAt(i);
+      if (code > 0xFF) return value; // kein Latin-1-Mojibake
+      bytes[i] = code;
+    }
+    const decoded = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    return decoded;
+  } catch (_e) {
+    return value; // Reparatur fehlgeschlagen → Original behalten
+  }
+}
 function normalizeDate(value) {
   if (value === null || value === undefined || value === "") return null;
   if (value instanceof Date) {
@@ -437,16 +454,16 @@ async function uploadFile() {
     return;
   }
   const arrayBuffer = await file.arrayBuffer();
-  const workbook = XLSX.read(arrayBuffer, { type:"array", cellDates:true });
+  const workbook = XLSX.read(arrayBuffer, { type:"array", cellDates:true, codepage:65001 });
   const sheet = workbook.Sheets[workbook.SheetNames[0]];
   const rows = XLSX.utils.sheet_to_json(sheet, { raw:true });
   const invoices = rows.map(row => ({
     company_id:null,
-    customer_name:row.kunde,
-    invoice_number:row.rechnungsnummer,
+    customer_name:fixMojibake(row.kunde),
+    invoice_number:fixMojibake(row.rechnungsnummer),
     amount:Number(String(row.betrag ?? "").replace(",", ".")),
     due_date:normalizeDate(row.faellig_am),
-    payment_status:row.status || "offen",
+    payment_status:fixMojibake(row.status) || "offen",
     reminder_stage:"none"
   }));
   const { error: insertError } = await supabaseClient
@@ -469,7 +486,12 @@ async function loadInvoices() {
     statusBox.innerHTML = "<h2>Status</h2><p>Fehler beim Laden der Rechnungen.</p>";
     return;
   }
-  allInvoices = data || [];
+  allInvoices = (data || []).map(inv => ({
+    ...inv,
+    customer_name: fixMojibake(inv.customer_name),
+    invoice_number: fixMojibake(inv.invoice_number),
+    payment_status: fixMojibake(inv.payment_status)
+  }));
   renderInvoices();
 }
 function setFilter(filter) {
