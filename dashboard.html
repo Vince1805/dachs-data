@@ -597,6 +597,7 @@
       <button type="button" class="btn-secondary" onclick="closeReminderModal()">Schließen</button>
       <button type="button" class="btn-secondary" onclick="saveReminderDraft()">Entwurf speichern</button>
       <button type="button" class="btn-primary" onclick="approveReminder()">Freigeben</button>
+      <button type="button" class="btn-primary" id="reminderSendBtn" onclick="sendReminderEmail()" style="display:none;">Per E-Mail senden</button>
     </div>
   </div>
 </div>
@@ -998,10 +999,12 @@ function renderInvoices() {
                     </button>`;
     } else if (reminder.status === "approved") {
       actionCell = `<button type="button" class="reminder-action-btn" onclick="openReminderModal('${inv.id}')">
-                      Freigabe öffnen
+                      Senden
                     </button>`;
     } else if (reminder.status === "sent") {
-      actionCell = `<span style="color:var(--text-muted); font-size:13px;">gesendet</span>`;
+      actionCell = `<button type="button" class="reminder-action-btn" onclick="openReminderModal('${inv.id}')">
+                      Erneut senden
+                    </button>`;
     } else {
       actionCell = `<button type="button" class="reminder-action-btn" onclick="openReminderModal('${inv.id}')">
                       Öffnen
@@ -1228,6 +1231,7 @@ async function saveParsedInvoice(parsed, filePath) {
     .insert({
       company_id: null,
       customer_name: parsed.customer_name || "",
+      customer_email: parsed.customer_email || null,
       invoice_number: parsed.invoice_number || "",
       amount: parsed.amount != null ? Number(parsed.amount) : 0,
       due_date: parsed.due_date || null,
@@ -1285,9 +1289,13 @@ function openReminderModal(invoiceId) {
     let statusLabel;
     switch (existing.status) {
       case "draft":    statusLabel = "Entwurf gespeichert"; break;
-      case "approved": statusLabel = "freigegeben"; break;
-      case "sent":     statusLabel = "gesendet"; break;
-      default:         statusLabel = existing.status || "unbekannt";
+      case "approved": statusLabel = "freigegeben — bereit zum Versand"; break;
+      case "sent":
+        statusLabel = "gesendet" + (existing.sent_at
+          ? " am " + new Date(existing.sent_at).toLocaleString("de-DE")
+          : "");
+        break;
+      default: statusLabel = existing.status || "unbekannt";
     }
     setReminderDbStatus(statusLabel);
   } else {
@@ -1303,6 +1311,21 @@ function openReminderModal(invoiceId) {
       toneSelect.value = "neutral";
     }
     setReminderDbStatus("neu — noch nicht gespeichert");
+  }
+  // Sende-Button kontextabhängig
+  const sendBtn = document.getElementById("reminderSendBtn");
+  if (sendBtn) {
+    if (existing && existing.status === "approved") {
+      sendBtn.style.display = "";
+      sendBtn.textContent = "Per E-Mail senden";
+      sendBtn.disabled = false;
+    } else if (existing && existing.status === "sent") {
+      sendBtn.style.display = "";
+      sendBtn.textContent = "Erneut senden";
+      sendBtn.disabled = false;
+    } else {
+      sendBtn.style.display = "none";
+    }
   }
   document.getElementById("reminderModal").classList.add("visible");
 }
@@ -1413,7 +1436,60 @@ async function approveReminder() {
     setReminderDbStatus("freigegeben");
     await loadReminders();
     renderInvoices();
+    // Send-Button nach erfolgreicher Freigabe direkt einblenden
+    const sendBtn = document.getElementById("reminderSendBtn");
+    if (sendBtn) {
+      sendBtn.style.display = "";
+      sendBtn.textContent = "Per E-Mail senden";
+      sendBtn.disabled = false;
+    }
     alert("Mahnung freigegeben.");
+  }
+}
+async function sendReminderEmail() {
+  if (!currentReminderId) {
+    alert("Bitte zuerst Entwurf speichern und freigeben.");
+    return;
+  }
+  if (!confirm("Mahnung jetzt per E-Mail senden?")) return;
+  const sendBtn = document.getElementById("reminderSendBtn");
+  if (sendBtn) { sendBtn.disabled = true; sendBtn.textContent = "Sende…"; }
+  setReminderDbStatus("Sende E-Mail…");
+  try {
+    let result = await supabaseClient.functions.invoke("send-reminder-email", {
+      body: { reminder_id: currentReminderId }
+    });
+    let data = result.data;
+    let invokeErr = result.error;
+    // Fallback: keine customer_email auf der Rechnung → User per prompt() fragen und retry
+    if (!invokeErr && data && !data.ok && typeof data.error === "string"
+        && /Empfänger-E-Mail|customer_email/i.test(data.error)) {
+      const manualTo = prompt("Keine E-Mail-Adresse auf der Rechnung hinterlegt.\nBitte Empfänger-E-Mail eingeben:");
+      if (!manualTo) {
+        setReminderDbStatus("freigegeben — bereit zum Versand");
+        return;
+      }
+      result = await supabaseClient.functions.invoke("send-reminder-email", {
+        body: { reminder_id: currentReminderId, to: manualTo.trim() }
+      });
+      data = result.data;
+      invokeErr = result.error;
+    }
+    if (invokeErr) throw new Error(invokeErr.message || "Edge Function Fehler");
+    if (!data || !data.ok) throw new Error((data && data.error) || "Versand fehlgeschlagen");
+    setReminderDbStatus("gesendet — soeben");
+    await loadReminders();
+    renderInvoices();
+    alert("Mahnung gesendet an " + (data.sent_to || "Empfänger") + ".");
+  } catch (e) {
+    console.error("send-reminder-email error:", e);
+    alert("Versand fehlgeschlagen: " + (e.message || e));
+    setReminderDbStatus("Fehler beim Versand");
+  } finally {
+    if (sendBtn) {
+      sendBtn.disabled = false;
+      sendBtn.textContent = "Per E-Mail senden";
+    }
   }
 }
 window.openPdf = openPdf;
@@ -1425,6 +1501,7 @@ window.closeReminderModal = closeReminderModal;
 window.generateReminderText = generateReminderText;
 window.saveReminderDraft = saveReminderDraft;
 window.approveReminder = approveReminder;
+window.sendReminderEmail = sendReminderEmail;
 window.loadReminders = loadReminders;
 uploadBtn.addEventListener("click", uploadFile);
 pdfUploadBtn.addEventListener("click", uploadPdf);
