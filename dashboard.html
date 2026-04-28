@@ -554,6 +554,19 @@ async function loadDocuments() {
     return;
   }
   renderDocuments(data || []);
+  async function openPdf(path) {
+  const { data } = supabaseClient
+    .storage
+    .from("uploads")
+    .getPublicUrl(path);
+
+  if (!data || !data.publicUrl) {
+    alert("PDF konnte nicht geöffnet werden.");
+    return;
+  }
+
+  window.open(data.publicUrl, "_blank");
+}
 }
 function renderDocuments(documents) {
   if (!documentsBox) return;
@@ -580,7 +593,11 @@ function renderDocuments(documents) {
   documents.forEach(doc => {
     html += `
       <tr>
-        <td>${doc.file_name || "-"}</td>
+        <td>
+  <a href="#" onclick="openPdf('${doc.file_path}')" style="color:var(--blue); text-decoration:none; font-weight:500;">
+    ${doc.file_name || "-"}
+  </a>
+</td>
         <td>
           <span class="badge badge-open">
             ${doc.status || "uploaded"}
