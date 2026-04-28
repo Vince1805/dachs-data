@@ -214,6 +214,34 @@
       background:var(--green-bg);
       color:var(--green);
     }
+    .badge-due {
+      background:#FEF3C7;
+      color:#92400E;
+    }
+    .badge-stage1 {
+      background:#FFEDD5;
+      color:#C2410C;
+    }
+    .badge-stage2 {
+      background:#FEE4E2;
+      color:#B42318;
+    }
+    .badge-stage3 {
+      background:#FEE2E2;
+      color:#7F1D1D;
+    }
+    .badge-inkasso {
+      background:#0B0B0B;
+      color:#FFFFFF;
+    }
+    .badge-paid {
+      background:var(--green-bg);
+      color:var(--green);
+    }
+    .badge-nodate {
+      background:var(--grey);
+      color:var(--text-muted);
+    }
     table {
       width:100%;
       border-collapse:collapse;
@@ -342,6 +370,43 @@ const statusBox = document.getElementById("status");
 const documentsBox = document.getElementById("documents");
 let allInvoices = [];
 let currentFilter = "all";
+function getDaysOverdue(dueDate) {
+  if (!dueDate) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const due = new Date(dueDate);
+  if (isNaN(due.getTime())) return null;
+  due.setHours(0, 0, 0, 0);
+  return Math.floor((today.getTime() - due.getTime()) / 86400000);
+}
+function calculateReminderStage(invoice) {
+  const status = invoice && invoice.payment_status;
+  if (status !== "offen" && status !== "überfällig") {
+    return "bezahlt/geschlossen";
+  }
+  if (!invoice.due_date) return "kein Fälligkeitsdatum";
+  const days = getDaysOverdue(invoice.due_date);
+  if (days === null) return "kein Fälligkeitsdatum";
+  if (days <= 0) return "nicht fällig";
+  if (days <= 6) return "fällig";
+  if (days <= 13) return "Mahnstufe 1";
+  if (days <= 29) return "Mahnstufe 2";
+  if (days <= 59) return "Mahnstufe 3";
+  return "Inkasso prüfen";
+}
+function reminderBadgeClass(stage) {
+  switch (stage) {
+    case "bezahlt/geschlossen": return "badge-paid";
+    case "kein Fälligkeitsdatum": return "badge-nodate";
+    case "nicht fällig": return "badge-open";
+    case "fällig": return "badge-due";
+    case "Mahnstufe 1": return "badge-stage1";
+    case "Mahnstufe 2": return "badge-stage2";
+    case "Mahnstufe 3": return "badge-stage3";
+    case "Inkasso prüfen": return "badge-inkasso";
+    default: return "badge-nodate";
+  }
+}
 function fixMojibake(value) {
   if (typeof value !== "string") return value;
   // Schnelltest: enthält der String typische Mojibake-Marker?
@@ -486,12 +551,17 @@ async function loadInvoices() {
     statusBox.innerHTML = "<h2>Status</h2><p>Fehler beim Laden der Rechnungen.</p>";
     return;
   }
-  allInvoices = (data || []).map(inv => ({
-    ...inv,
-    customer_name: fixMojibake(inv.customer_name),
-    invoice_number: fixMojibake(inv.invoice_number),
-    payment_status: fixMojibake(inv.payment_status)
-  }));
+  allInvoices = (data || []).map(inv => {
+    const cleaned = {
+      ...inv,
+      customer_name: fixMojibake(inv.customer_name),
+      invoice_number: fixMojibake(inv.invoice_number),
+      payment_status: fixMojibake(inv.payment_status)
+    };
+    cleaned._daysOverdue = getDaysOverdue(cleaned.due_date);
+    cleaned._reminderStage = calculateReminderStage(cleaned);
+    return cleaned;
+  });
   renderInvoices();
 }
 function setFilter(filter) {
@@ -504,6 +574,20 @@ function getFilteredInvoices() {
   }
   if (currentFilter === "overdue") {
     return allInvoices.filter(inv => inv.payment_status === "überfällig");
+  }
+  if (currentFilter === "stage1") {
+    return allInvoices.filter(inv => inv._reminderStage === "Mahnstufe 1");
+  }
+  if (currentFilter === "stage2") {
+    return allInvoices.filter(inv => inv._reminderStage === "Mahnstufe 2");
+  }
+  if (currentFilter === "stage3plus") {
+    return allInvoices.filter(inv =>
+      inv._reminderStage === "Mahnstufe 3" || inv._reminderStage === "Inkasso prüfen"
+    );
+  }
+  if (currentFilter === "inkasso") {
+    return allInvoices.filter(inv => inv._reminderStage === "Inkasso prüfen");
   }
   return allInvoices;
 }
@@ -522,6 +606,12 @@ function renderInvoices() {
   const overdueInvoices = allInvoices.filter(inv => inv.payment_status === "überfällig");
   const overdueAmount = overdueInvoices.reduce((sum, inv) => sum + Number(inv.amount || 0), 0);
   const openInvoices = allInvoices.filter(inv => inv.payment_status === "offen");
+  const stage1Invoices = allInvoices.filter(inv => inv._reminderStage === "Mahnstufe 1");
+  const stage2Invoices = allInvoices.filter(inv => inv._reminderStage === "Mahnstufe 2");
+  const stage3PlusInvoices = allInvoices.filter(inv =>
+    inv._reminderStage === "Mahnstufe 3" || inv._reminderStage === "Inkasso prüfen"
+  );
+  const inkassoInvoices = allInvoices.filter(inv => inv._reminderStage === "Inkasso prüfen");
   let html = `
     <h2>Übersicht</h2>
     <p>${allInvoices.length} Rechnungen geladen.</p>
@@ -538,6 +628,18 @@ function renderInvoices() {
         <div class="kpi-label">Offene Rechnungen</div>
         <div class="kpi-value">${openInvoices.length}</div>
       </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Mahnstufe 1</div>
+        <div class="kpi-value">${stage1Invoices.length}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Mahnstufe 2</div>
+        <div class="kpi-value">${stage2Invoices.length}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Mahnstufe 3+</div>
+        <div class="kpi-value">${stage3PlusInvoices.length}</div>
+      </div>
     </div>
     <h2>Importierte Rechnungen</h2>
     <div class="filter-row">
@@ -549,6 +651,18 @@ function renderInvoices() {
       </button>
       <button class="filter-btn ${currentFilter === "overdue" ? "active" : ""}" onclick="setFilter('overdue')">
         Überfällig (${overdueInvoices.length})
+      </button>
+      <button class="filter-btn ${currentFilter === "stage1" ? "active" : ""}" onclick="setFilter('stage1')">
+        Mahnstufe 1 (${stage1Invoices.length})
+      </button>
+      <button class="filter-btn ${currentFilter === "stage2" ? "active" : ""}" onclick="setFilter('stage2')">
+        Mahnstufe 2 (${stage2Invoices.length})
+      </button>
+      <button class="filter-btn ${currentFilter === "stage3plus" ? "active" : ""}" onclick="setFilter('stage3plus')">
+        Mahnstufe 3+ (${stage3PlusInvoices.length})
+      </button>
+      <button class="filter-btn ${currentFilter === "inkasso" ? "active" : ""}" onclick="setFilter('inkasso')">
+        Inkasso prüfen (${inkassoInvoices.length})
       </button>
     </div>
   `;
@@ -565,6 +679,7 @@ function renderInvoices() {
           <th>Rechnung</th>
           <th>Betrag</th>
           <th>Status</th>
+          <th>Mahnstufe</th>
           <th>Fällig</th>
         </tr>
       </thead>
@@ -573,6 +688,8 @@ function renderInvoices() {
   invoices.forEach(inv => {
     const status = inv.payment_status || "-";
     const isOverdue = status === "überfällig";
+    const stage = inv._reminderStage || calculateReminderStage(inv);
+    const stageBadge = reminderBadgeClass(stage);
     html += `
       <tr>
         <td>${inv.customer_name || "-"}</td>
@@ -581,6 +698,11 @@ function renderInvoices() {
         <td>
           <span class="badge ${isOverdue ? "badge-overdue" : "badge-open"}">
             ${status}
+          </span>
+        </td>
+        <td>
+          <span class="badge ${stageBadge}">
+            ${stage}
           </span>
         </td>
         <td>${inv.due_date || "-"}</td>
