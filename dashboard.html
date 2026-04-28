@@ -312,6 +312,10 @@
       <h2>Status</h2>
       <p>Noch keine Daten vorhanden.</p>
     </div>
+    <div class="card" id="documents">
+      <h2>Hochgeladene PDFs</h2>
+      <p>Noch keine PDFs hochgeladen.</p>
+    </div>
   </main>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -329,6 +333,7 @@ const uploadBtn = document.getElementById("uploadBtn");
 const pdfInput = document.getElementById("pdfInput");
 const pdfUploadBtn = document.getElementById("pdfUploadBtn");
 const statusBox = document.getElementById("status");
+const documentsBox = document.getElementById("documents");
 let allInvoices = [];
 let currentFilter = "all";
 async function checkSession() {
@@ -341,6 +346,7 @@ async function checkSession() {
   loadingEl.classList.add("hidden");
   dashboardEl.classList.add("visible");
   await loadInvoices();
+  await loadDocuments();
 }
 async function logout() {
   await supabaseClient.auth.signOut();
@@ -518,27 +524,77 @@ async function uploadPdf() {
     .from("uploads")
     .upload(filePath, file);
   if (uploadError) {
-  alert("PDF Upload fehlgeschlagen: " + uploadError.message);
-  return;
+    alert("PDF Upload fehlgeschlagen: " + uploadError.message);
+    return;
+  }
+  const { error: documentError } = await supabaseClient
+    .from("uploaded_documents")
+    .insert({
+      user_id: session.user.id,
+      file_name: file.name,
+      file_path: filePath,
+      file_type: "pdf",
+      status: "uploaded"
+    });
+  if (documentError) {
+    alert("PDF wurde hochgeladen, aber Dokument-Eintrag fehlgeschlagen: " + documentError.message);
+    return;
+  }
+  alert("PDF erfolgreich hochgeladen und gespeichert.");
+  pdfInput.value = "";
+  await loadDocuments();
 }
-
-const { error: documentError } = await supabaseClient
-  .from("uploaded_documents")
-  .insert({
-    user_id: session.user.id,
-    file_name: file.name,
-    file_path: filePath,
-    file_type: "pdf",
-    status: "uploaded"
+async function loadDocuments() {
+  const { data, error } = await supabaseClient
+    .from("uploaded_documents")
+    .select("*")
+    .order("created_at", { ascending:false });
+  if (error) {
+    console.error("Fehler beim Laden der PDFs:", error);
+    return;
+  }
+  renderDocuments(data || []);
+}
+function renderDocuments(documents) {
+  if (!documentsBox) return;
+  if (!documents || documents.length === 0) {
+    documentsBox.innerHTML = `
+      <h2>Hochgeladene PDFs</h2>
+      <p>Noch keine PDFs hochgeladen.</p>
+    `;
+    return;
+  }
+  let html = `
+    <h2>Hochgeladene PDFs</h2>
+    <p>${documents.length} PDF-Dokumente gespeichert.</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Datei</th>
+          <th>Status</th>
+          <th>Upload</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+  documents.forEach(doc => {
+    html += `
+      <tr>
+        <td>${doc.file_name || "-"}</td>
+        <td>
+          <span class="badge badge-open">
+            ${doc.status || "uploaded"}
+          </span>
+        </td>
+        <td>${doc.created_at ? new Date(doc.created_at).toLocaleString("de-DE") : "-"}</td>
+      </tr>
+    `;
   });
-
-if (documentError) {
-  alert("PDF wurde hochgeladen, aber Dokument-Eintrag fehlgeschlagen: " + documentError.message);
-  return;
-}
-
-alert("PDF erfolgreich hochgeladen und gespeichert.");
-pdfInput.value = "";
+  html += `
+      </tbody>
+    </table>
+  `;
+  documentsBox.innerHTML = html;
 }
 uploadBtn.addEventListener("click", uploadFile);
 pdfUploadBtn.addEventListener("click", uploadPdf);
