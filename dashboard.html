@@ -369,6 +369,23 @@ uploadBtn.addEventListener("click", uploadFile);
 logoutBtn.addEventListener("click", logout);
 
 checkSession();
+async function checkSession() {
+  const { data } = await supabaseClient.auth.getSession();
+
+  if (!data.session) {
+    window.location.href = "/login.html";
+    return;
+  }
+
+  userEmailEl.textContent = data.session.user.email;
+
+  loadingEl.classList.add("hidden");
+  dashboardEl.classList.add("visible");
+
+  console.log("✅ Session OK");
+
+  await loadInvoices();   // 🔥 DAS IST ENTSCHEIDEND
+}
 </script>
 
 </body>
