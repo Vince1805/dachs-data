@@ -23,6 +23,8 @@
       --red:#B42318;
       --red-bg:#FEE4E2;
       --blue-bg:#EAF0FF;
+      --green:#027A48;
+      --green-bg:#ECFDF3;
     }
     * { box-sizing:border-box; }
     html, body {
@@ -207,6 +209,10 @@
     .badge-overdue {
       background:var(--red-bg);
       color:var(--red);
+    }
+    .badge-processed {
+      background:var(--green-bg);
+      color:var(--green);
     }
     table {
       width:100%;
@@ -585,24 +591,36 @@ function renderDocuments(documents) {
           <th>Datei</th>
           <th>Status</th>
           <th>Upload</th>
+          <th>Aktion</th>
         </tr>
       </thead>
       <tbody>
   `;
   documents.forEach(doc => {
+    const docStatus = doc.status || "uploaded";
+    const isProcessed = docStatus === "processed";
+    const statusBadgeClass = isProcessed ? "badge-processed" : "badge-open";
+    const safeFileName = (doc.file_name || "").replaceAll("'", "\\'");
+    const safeFilePath = (doc.file_path || "").replaceAll("'", "\\'");
+    const actionCell = isProcessed
+      ? `<span class="badge badge-processed">erfasst</span>`
+      : `<button class="btn-secondary" onclick="manualParsePdf('${safeFileName}', '${safeFilePath}'); return false;">
+           Als Rechnung erfassen
+         </button>`;
     html += `
       <tr>
         <td>
-          <a href="#" onclick="openPdf('${doc.file_path}'); return false;" style="color:var(--blue); text-decoration:none; font-weight:500;">
+          <a href="#" onclick="openPdf('${safeFilePath}'); return false;" style="color:var(--blue); text-decoration:none; font-weight:500;">
             ${doc.file_name || "-"}
           </a>
         </td>
         <td>
-          <span class="badge badge-open">
-            ${doc.status || "uploaded"}
+          <span class="badge ${statusBadgeClass}">
+            ${docStatus}
           </span>
         </td>
         <td>${doc.created_at ? new Date(doc.created_at).toLocaleString("de-DE") : "-"}</td>
+        <td>${actionCell}</td>
       </tr>
     `;
   });
@@ -612,8 +630,48 @@ function renderDocuments(documents) {
   `;
   documentsBox.innerHTML = html;
 }
+async function manualParsePdf(fileName, filePath) {
+  const customerName = prompt("Kunde / Debitor:");
+  if (!customerName) return;
+  const invoiceNumber = prompt("Rechnungsnummer:");
+  if (!invoiceNumber) return;
+  const amountRaw = prompt("Betrag in EUR, z.B. 12500.50:");
+  if (!amountRaw) return;
+  const dueDate = prompt("Fälligkeitsdatum im Format YYYY-MM-DD:");
+  if (!dueDate) return;
+  const status = prompt("Status: offen oder überfällig", "offen") || "offen";
+  const amount = Number(amountRaw.replace(",", "."));
+  if (Number.isNaN(amount)) {
+    alert("Betrag ist ungültig.");
+    return;
+  }
+  const { error } = await supabaseClient
+    .from("invoices")
+    .insert({
+      company_id: null,
+      customer_name: customerName,
+      invoice_number: invoiceNumber,
+      amount: amount,
+      due_date: dueDate,
+      payment_status: status,
+      reminder_stage: "none"
+    });
+  if (error) {
+    alert("Rechnung konnte nicht gespeichert werden: " + error.message);
+    console.error(error);
+    return;
+  }
+  await supabaseClient
+    .from("uploaded_documents")
+    .update({ status: "processed" })
+    .eq("file_path", filePath);
+  alert("PDF wurde als Rechnung erfasst.");
+  await loadInvoices();
+  await loadDocuments();
+}
 window.openPdf = openPdf;
 window.setFilter = setFilter;
+window.manualParsePdf = manualParsePdf;
 uploadBtn.addEventListener("click", uploadFile);
 pdfUploadBtn.addEventListener("click", uploadPdf);
 logoutBtn.addEventListener("click", logout);
