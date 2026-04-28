@@ -342,6 +342,68 @@ const statusBox = document.getElementById("status");
 const documentsBox = document.getElementById("documents");
 let allInvoices = [];
 let currentFilter = "all";
+function normalizeDate(value) {
+  if (value === null || value === undefined || value === "") return null;
+  if (value instanceof Date) {
+    if (isNaN(value.getTime())) return null;
+    const y = value.getFullYear();
+    const m = String(value.getMonth() + 1).padStart(2, "0");
+    const d = String(value.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
+  if (typeof value === "number" && Number.isFinite(value)) {
+    // Excel-Seriennummer: Tage seit 1899-12-30 (kompensiert den 1900-Leap-Year-Bug)
+    // 25569 = Tage zwischen 1899-12-30 und 1970-01-01 (Unix-Epoch)
+    const ms = Math.round((value - 25569) * 86400 * 1000);
+    const d = new Date(ms);
+    if (isNaN(d.getTime())) return null;
+    const y = d.getUTCFullYear();
+    const mo = String(d.getUTCMonth() + 1).padStart(2, "0");
+    const dy = String(d.getUTCDate()).padStart(2, "0");
+    return `${y}-${mo}-${dy}`;
+  }
+  if (typeof value === "string") {
+    const s = value.trim();
+    if (!s) return null;
+    // ISO YYYY-MM-DD
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+    // ISO mit Zeitanteil
+    const iso = s.match(/^(\d{4}-\d{2}-\d{2})T/);
+    if (iso) return iso[1];
+    // Deutsch DD.MM.YYYY oder D.M.YY
+    const de = s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$/);
+    if (de) {
+      let [, d, m, y] = de;
+      d = d.padStart(2, "0");
+      m = m.padStart(2, "0");
+      if (y.length === 2) y = (Number(y) >= 50 ? "19" : "20") + y;
+      return `${y}-${m}-${d}`;
+    }
+    // Slash DD/MM/YYYY
+    const sl = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+    if (sl) {
+      let [, d, m, y] = sl;
+      d = d.padStart(2, "0");
+      m = m.padStart(2, "0");
+      if (y.length === 2) y = (Number(y) >= 50 ? "19" : "20") + y;
+      return `${y}-${m}-${d}`;
+    }
+    // Numerischer String → als Excel-Serial behandeln
+    if (/^-?\d+(\.\d+)?$/.test(s)) {
+      return normalizeDate(Number(s));
+    }
+    // Letzte Chance: Date.parse
+    const parsed = new Date(s);
+    if (!isNaN(parsed.getTime())) {
+      const y = parsed.getFullYear();
+      const m = String(parsed.getMonth() + 1).padStart(2, "0");
+      const d = String(parsed.getDate()).padStart(2, "0");
+      return `${y}-${m}-${d}`;
+    }
+    return null;
+  }
+  return null;
+}
 async function checkSession() {
   const { data, error } = await supabaseClient.auth.getSession();
   if (error || !data.session) {
@@ -375,15 +437,15 @@ async function uploadFile() {
     return;
   }
   const arrayBuffer = await file.arrayBuffer();
-  const workbook = XLSX.read(arrayBuffer, { type:"array" });
+  const workbook = XLSX.read(arrayBuffer, { type:"array", cellDates:true });
   const sheet = workbook.Sheets[workbook.SheetNames[0]];
-  const rows = XLSX.utils.sheet_to_json(sheet);
+  const rows = XLSX.utils.sheet_to_json(sheet, { raw:true });
   const invoices = rows.map(row => ({
     company_id:null,
     customer_name:row.kunde,
     invoice_number:row.rechnungsnummer,
-    amount:Number(row.betrag),
-    due_date:row.faellig_am,
+    amount:Number(String(row.betrag ?? "").replace(",", ".")),
+    due_date:normalizeDate(row.faellig_am),
     payment_status:row.status || "offen",
     reminder_stage:"none"
   }));
