@@ -631,6 +631,43 @@ function renderDocuments(documents) {
   documentsBox.innerHTML = html;
 }
 async function manualParsePdf(fileName, filePath) {
+  console.log("AI Parsing für:", fileName, filePath);
+  let parsed = null;
+  try {
+    const { data, error } = await supabaseClient.functions.invoke("parse-pdf", {
+      body: { file_path: filePath, file_name: fileName }
+    });
+    if (error) {
+      console.error("Edge Function Fehler:", error);
+      throw new Error(error.message || "Edge Function Fehler");
+    }
+    if (!data || !data.ok || !data.parsed) {
+      console.error("Edge Function unerwartete Antwort:", data);
+      throw new Error((data && data.error) || "AI Parsing fehlgeschlagen");
+    }
+    parsed = data.parsed;
+  } catch (e) {
+    console.error("AI Parsing fehlgeschlagen, Fallback auf manuelle Eingabe:", e);
+    alert("Automatische Auslesung fehlgeschlagen. Bitte Daten manuell eingeben.");
+    return fallbackManualParsePdf(fileName, filePath);
+  }
+  const summary =
+    "AI-Auslesung erfolgreich. Bitte prüfen:\n\n" +
+    "Kunde: " + (parsed.customer_name || "(leer)") + "\n" +
+    "Rechnungsnummer: " + (parsed.invoice_number || "(leer)") + "\n" +
+    "Betrag: " + (parsed.amount != null ? parsed.amount + " EUR" : "(leer)") + "\n" +
+    "Fällig: " + (parsed.due_date || "(kein Datum)") + "\n" +
+    "Status: " + (parsed.payment_status || "offen") + "\n\n" +
+    "Speichern?";
+  if (!confirm(summary)) {
+    if (confirm("Stattdessen manuell eingeben?")) {
+      return fallbackManualParsePdf(fileName, filePath);
+    }
+    return;
+  }
+  await saveParsedInvoice(parsed, filePath);
+}
+async function fallbackManualParsePdf(fileName, filePath) {
   const customerName = prompt("Kunde / Debitor:");
   if (!customerName) return;
   const invoiceNumber = prompt("Rechnungsnummer:");
@@ -645,26 +682,38 @@ async function manualParsePdf(fileName, filePath) {
     alert("Betrag ist ungültig.");
     return;
   }
+  await saveParsedInvoice({
+    customer_name: customerName,
+    invoice_number: invoiceNumber,
+    amount: amount,
+    due_date: dueDate,
+    payment_status: status
+  }, filePath);
+}
+async function saveParsedInvoice(parsed, filePath) {
   const { error } = await supabaseClient
     .from("invoices")
     .insert({
       company_id: null,
-      customer_name: customerName,
-      invoice_number: invoiceNumber,
-      amount: amount,
-      due_date: dueDate,
-      payment_status: status,
+      customer_name: parsed.customer_name || "",
+      invoice_number: parsed.invoice_number || "",
+      amount: parsed.amount != null ? Number(parsed.amount) : 0,
+      due_date: parsed.due_date || null,
+      payment_status: parsed.payment_status || "offen",
       reminder_stage: "none"
     });
   if (error) {
     alert("Rechnung konnte nicht gespeichert werden: " + error.message);
-    console.error(error);
+    console.error("invoices insert error:", error);
     return;
   }
-  await supabaseClient
+  const { error: updateError } = await supabaseClient
     .from("uploaded_documents")
     .update({ status: "processed" })
     .eq("file_path", filePath);
+  if (updateError) {
+    console.error("uploaded_documents update error:", updateError);
+  }
   alert("PDF wurde als Rechnung erfasst.");
   await loadInvoices();
   await loadDocuments();
@@ -672,6 +721,7 @@ async function manualParsePdf(fileName, filePath) {
 window.openPdf = openPdf;
 window.setFilter = setFilter;
 window.manualParsePdf = manualParsePdf;
+window.fallbackManualParsePdf = fallbackManualParsePdf;
 uploadBtn.addEventListener("click", uploadFile);
 pdfUploadBtn.addEventListener("click", uploadPdf);
 logoutBtn.addEventListener("click", logout);
