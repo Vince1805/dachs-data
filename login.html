@@ -3,56 +3,372 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login - DACHS DATA</title>
+  <title>Login – DACHS DATA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    :root {
+      --black: #0B0B0B;
+      --white: #FFFFFF;
+      --grey: #F5F5F7;
+      --grey-2: #E5E5EA;
+      --text-muted: #6B6B70;
+      --blue: #0A2A6B;
+      --blue-hover: #08214F;
+      --danger: #B42318;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--grey);
+      color: var(--black);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* Subtle background gradient */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background:
+        radial-gradient(ellipse 60% 40% at 50% 0%, rgba(10, 42, 107, 0.06), transparent 70%),
+        linear-gradient(180deg, #FAFAFC 0%, #F5F5F7 100%);
+    }
+
+    header.topbar {
+      padding: 22px 32px;
+    }
+
+    .brand {
+      display: inline-block;
+      font-weight: 700;
+      font-size: 18px;
+      letter-spacing: -0.01em;
+      color: var(--black);
+      text-decoration: none;
+    }
+    .brand span { color: var(--blue); }
+
+    main.center {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 20px 64px;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 420px;
+      background: var(--white);
+      border: 1px solid var(--grey-2);
+      border-radius: 16px;
+      padding: 40px 36px 32px;
+      box-shadow:
+        0 1px 2px rgba(11, 11, 11, 0.04),
+        0 8px 32px -12px rgba(10, 42, 107, 0.10);
+    }
+
+    .card h1 {
+      margin: 0 0 8px;
+      font-size: 26px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: var(--black);
+    }
+
+    .card .subline {
+      margin: 0 0 28px;
+      font-size: 14px;
+      line-height: 1.5;
+      color: var(--text-muted);
+    }
+
+    form { margin: 0; }
+
+    .field {
+      margin-bottom: 14px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--black);
+      margin-bottom: 6px;
+    }
+
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      font-family: inherit;
+      font-size: 15px;
+      color: var(--black);
+      background: var(--white);
+      padding: 11px 14px;
+      border: 1px solid var(--grey-2);
+      border-radius: 10px;
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    input[type="email"]::placeholder,
+    input[type="password"]::placeholder {
+      color: #A1A1A6;
+    }
+
+    input[type="email"]:focus,
+    input[type="password"]:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(10, 42, 107, 0.12);
+    }
+
+    .actions {
+      margin-top: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    button {
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      padding: 11px 16px;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+    }
+
+    .btn-primary {
+      background: var(--blue);
+      color: var(--white);
+    }
+    .btn-primary:hover { background: var(--blue-hover); }
+
+    .btn-secondary {
+      background: var(--white);
+      color: var(--black);
+      border-color: var(--grey-2);
+    }
+    .btn-secondary:hover { background: var(--grey); }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .hint {
+      margin: 18px 0 0;
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .hint a {
+      color: var(--blue);
+      text-decoration: none;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .hint a:hover { text-decoration: underline; }
+
+    .divider {
+      margin: 22px 0 18px;
+      height: 1px;
+      background: var(--grey-2);
+    }
+
+    .trust {
+      margin: 14px 0 0;
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      width: 100%;
+      justify-content: center;
+    }
+    .trust svg { flex-shrink: 0; }
+
+    .error {
+      margin: 0 0 14px;
+      padding: 10px 12px;
+      background: #FEF3F2;
+      border: 1px solid #FECDCA;
+      color: var(--danger);
+      border-radius: 8px;
+      font-size: 13px;
+      display: none;
+    }
+    .error.visible { display: block; }
+
+    @media (max-width: 480px) {
+      header.topbar { padding: 18px 20px; }
+      .card { padding: 32px 24px 28px; border-radius: 14px; }
+      .card h1 { font-size: 22px; }
+    }
+  </style>
 </head>
 <body>
 
-<h1>DACHS DATA Login</h1>
+  <header class="topbar">
+    <a href="/" class="brand">DACHS <span>DATA</span></a>
+  </header>
 
-<input id="email" type="email" placeholder="E-Mail" />
-<input id="password" type="password" placeholder="Passwort" />
+  <main class="center">
+    <div class="card">
+      <h1>Willkommen zurück</h1>
+      <p class="subline">Melde dich an, um dein Forderungsmanagement zu steuern.</p>
 
-<br><br>
+      <div id="errorBox" class="error" role="alert"></div>
 
-<button onclick="signup()">Registrieren</button>
-<button onclick="login()">Einloggen</button>
+      <form id="authForm" autocomplete="on" novalidate>
+        <div class="field">
+          <label for="email">E-Mail</label>
+          <input
+            id="email"
+            type="email"
+            placeholder="name@unternehmen.de"
+            autocomplete="email"
+            required
+          />
+        </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+        <div class="field">
+          <label for="password">Passwort</label>
+          <input
+            id="password"
+            type="password"
+            placeholder="••••••••"
+            autocomplete="current-password"
+            required
+          />
+        </div>
 
-<script>
-const supabaseClient = window.supabase.createClient(
-  "https://mmwhpcopwygabwmszdls.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1td2hwY29wd3lnYWJ3bXN6ZGxzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczMTQ4MzUsImV4cCI6MjA5Mjg5MDgzNX0.NY5SEa7i7ZUbfEWa8ZuY6xYvJSgSxijLa8rHp21FPKk"
-)
+        <div class="actions">
+          <button type="submit" id="loginBtn" class="btn-primary">Einloggen</button>
+          <button type="button" id="signupBtn" class="btn-secondary">Account erstellen</button>
+        </div>
+      </form>
 
-async function signup() {
-  const email = document.getElementById("email").value
-  const password = document.getElementById("password").value
+      <p class="hint">
+        Noch keinen Account? <a id="signupLink">Registrieren</a>
+      </p>
 
-  const { error } = await supabaseClient.auth.signUp({ email, password })
+      <div class="divider" aria-hidden="true"></div>
 
-  if (error) {
-    alert(error.message)
-    return
-  }
+      <p class="trust">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="4" y="11" width="16" height="9" rx="2"></rect>
+          <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
+        </svg>
+        Sicherer Zugang zu deinem Cashflow-Cockpit.
+      </p>
+    </div>
+  </main>
 
-  alert("Registrierung erfolgreich. Du kannst dich jetzt einloggen.")
-}
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const supabaseClient = window.supabase.createClient(
+      "https://mmwhpcopwygabwmszdls.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1td2hwY29wd3lnYWJ3bXN6ZGxzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczMTQ4MzUsImV4cCI6MjA5Mjg5MDgzNX0.NY5SEa7i7ZUbfEWa8ZuY6xYvJSgSxijLa8rHp21FPKk"
+    );
 
-async function login() {
-  const email = document.getElementById("email").value
-  const password = document.getElementById("password").value
+    const emailEl    = document.getElementById("email");
+    const passwordEl = document.getElementById("password");
+    const errorBox   = document.getElementById("errorBox");
+    const loginBtn   = document.getElementById("loginBtn");
+    const signupBtn  = document.getElementById("signupBtn");
+    const signupLink = document.getElementById("signupLink");
+    const form       = document.getElementById("authForm");
 
-  const { error } = await supabaseClient.auth.signInWithPassword({ email, password })
+    function showError(message) {
+      errorBox.textContent = message;
+      errorBox.classList.add("visible");
+    }
+    function clearError() {
+      errorBox.textContent = "";
+      errorBox.classList.remove("visible");
+    }
+    function setLoading(isLoading) {
+      loginBtn.disabled  = isLoading;
+      signupBtn.disabled = isLoading;
+      loginBtn.textContent  = isLoading ? "Bitte warten…" : "Einloggen";
+    }
 
-  if (error) {
-    alert(error.message)
-    return
-  }
+    async function login() {
+      clearError();
+      const email = emailEl.value.trim();
+      const password = passwordEl.value;
+      if (!email || !password) {
+        showError("Bitte E-Mail und Passwort eingeben.");
+        return;
+      }
+      setLoading(true);
+      try {
+        const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if (error) {
+          showError(error.message);
+          alert(error.message);
+          return;
+        }
+        window.location.href = "/dashboard.html";
+      } finally {
+        setLoading(false);
+      }
+    }
 
-  window.location.href = "/dashboard.html"
-}
-</script>
+    async function signup() {
+      clearError();
+      const email = emailEl.value.trim();
+      const password = passwordEl.value;
+      if (!email || !password) {
+        showError("Bitte E-Mail und Passwort eingeben.");
+        return;
+      }
+      setLoading(true);
+      try {
+        const { error } = await supabaseClient.auth.signUp({ email, password });
+        if (error) {
+          showError(error.message);
+          alert(error.message);
+          return;
+        }
+        alert("Registrierung erfolgreich. Bitte bestätige deine E-Mail und logge dich anschließend ein.");
+      } finally {
+        setLoading(false);
+      }
+    }
 
+    // Wire up events
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      login();
+    });
+    signupBtn.addEventListener("click", signup);
+    signupLink.addEventListener("click", signup);
+
+    // Expose globally so old onclick="login()"/onclick="signup()" still work if referenced anywhere
+    window.login = login;
+    window.signup = signup;
+  </script>
 </body>
 </html>
