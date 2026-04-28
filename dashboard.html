@@ -298,8 +298,15 @@
       <p>Lade deine offenen Forderungen als Excel- oder CSV-Datei hoch.</p>
       <div class="upload-row">
         <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" />
-        <button class="btn-primary" id="uploadBtn">Hochladen</button>
+        <button class="btn-primary" id="uploadBtn">Excel/CSV hochladen</button>
       </div>
+      <div class="upload-row" style="margin-top:14px;">
+        <input type="file" id="pdfInput" accept=".pdf" />
+        <button class="btn-primary" id="pdfUploadBtn">PDF hochladen</button>
+      </div>
+      <p style="margin:14px 0 0; font-size:13px; color:var(--text-muted);">
+        PDFs werden gespeichert. Automatische Auslesung folgt im nächsten Schritt.
+      </p>
     </div>
     <div class="card" id="status">
       <h2>Status</h2>
@@ -319,6 +326,8 @@ const userEmailEl = document.getElementById("userEmail");
 const logoutBtn = document.getElementById("logoutBtn");
 const fileInput = document.getElementById("fileInput");
 const uploadBtn = document.getElementById("uploadBtn");
+const pdfInput = document.getElementById("pdfInput");
+const pdfUploadBtn = document.getElementById("pdfUploadBtn");
 const statusBox = document.getElementById("status");
 let allInvoices = [];
 let currentFilter = "all";
@@ -488,7 +497,35 @@ function renderInvoices() {
   `;
   statusBox.innerHTML = html;
 }
+async function uploadPdf() {
+  const file = pdfInput.files[0];
+  if (!file) {
+    alert("Bitte PDF-Datei auswählen");
+    return;
+  }
+  if (file.type !== "application/pdf") {
+    alert("Bitte nur PDF-Dateien hochladen.");
+    return;
+  }
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  if (!session) {
+    window.location.href = "/login.html";
+    return;
+  }
+  const safeFileName = file.name.replaceAll(" ", "_");
+  const filePath = `${session.user.id}/pdfs/${Date.now()}_${safeFileName}`;
+  const { error: uploadError } = await supabaseClient.storage
+    .from("uploads")
+    .upload(filePath, file);
+  if (uploadError) {
+    alert("PDF Upload fehlgeschlagen: " + uploadError.message);
+    return;
+  }
+  alert("PDF erfolgreich hochgeladen. Automatische Auslesung folgt im nächsten Schritt.");
+  pdfInput.value = "";
+}
 uploadBtn.addEventListener("click", uploadFile);
+pdfUploadBtn.addEventListener("click", uploadPdf);
 logoutBtn.addEventListener("click", logout);
 checkSession();
 </script>
