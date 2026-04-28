@@ -270,11 +270,22 @@
       margin-top:20px;
     }
     .table-wrap table {
+      min-width:1100px;
+      border-collapse:collapse;
       margin-top:0;
     }
-    /* Spalten ab Position 3 (Betrag, Status, Mahnstufe, Mahnung, Fällig, Aktion) nicht umbrechen */
-    .table-wrap th:nth-child(n+3),
-    .table-wrap td:nth-child(n+3) {
+    .col-customer {
+      max-width:240px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .col-amount,
+    .col-status,
+    .col-stage,
+    .col-reminder,
+    .col-due,
+    .col-action {
       white-space:nowrap;
     }
     .amount-overdue {
@@ -996,28 +1007,30 @@ function renderInvoices() {
                       Öffnen
                     </button>`;
     }
+    const customerName = inv.customer_name || "-";
+    const customerTitle = customerName.replace(/"/g, "&quot;");
     html += `
       <tr>
-        <td>${inv.customer_name || "-"}</td>
+        <td class="col-customer" title="${customerTitle}">${customerName}</td>
         <td>${inv.invoice_number || "-"}</td>
-        <td class="${isOverdue ? "amount-overdue" : ""}">${formatEuro(Number(inv.amount || 0))}</td>
-        <td>
+        <td class="col-amount ${isOverdue ? "amount-overdue" : ""}">${formatEuro(Number(inv.amount || 0))}</td>
+        <td class="col-status">
           <span class="badge ${isOverdue ? "badge-overdue" : "badge-open"}">
             ${status}
           </span>
         </td>
-        <td>
+        <td class="col-stage">
           <span class="badge ${stageBadge}">
             ${stage}
           </span>
         </td>
-        <td>
+        <td class="col-reminder">
           <span class="badge ${reminderBadge}">
             ${reminderLabel}
           </span>
         </td>
-        <td>${inv.due_date || "-"}</td>
-        <td>${actionCell}</td>
+        <td class="col-due">${inv.due_date || "-"}</td>
+        <td class="col-action">${actionCell}</td>
       </tr>
     `;
   });
