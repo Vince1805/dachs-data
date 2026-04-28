@@ -430,6 +430,84 @@
       white-space:nowrap;
       min-width:120px;
     }
+    .collapsible-header {
+      cursor:pointer;
+      user-select:none;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin:0 0 6px;
+    }
+    .collapsible-header:hover .collapse-toggle {
+      color:var(--blue);
+    }
+    .collapsible-header h2 {
+      margin:0;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      flex:1;
+      min-width:0;
+    }
+    .collapse-toggle {
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      font-size:13px;
+      color:var(--text-muted);
+      font-weight:500;
+      white-space:nowrap;
+      transition:color 0.15s ease;
+    }
+    .collapse-toggle .chevron {
+      display:inline-block;
+      font-size:12px;
+      transition:transform 0.2s ease;
+      transform:rotate(-90deg);
+    }
+    .collapse-toggle.expanded .chevron {
+      transform:rotate(0deg);
+    }
+    .collapsible-body {
+      display:block;
+    }
+    .collapsible-body.collapsed {
+      display:none;
+    }
+    .pagination {
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:12px;
+      margin-top:18px;
+      flex-wrap:wrap;
+    }
+    .pagination button {
+      background:white;
+      color:var(--black);
+      border:1px solid var(--grey-2);
+      padding:7px 14px;
+      border-radius:8px;
+      font-size:13px;
+      font-weight:500;
+      cursor:pointer;
+      font-family:inherit;
+    }
+    .pagination button:hover:not(:disabled) {
+      background:var(--grey);
+      border-color:var(--blue);
+      color:var(--blue);
+    }
+    .pagination button:disabled {
+      opacity:0.4;
+      cursor:not-allowed;
+    }
+    .pagination-info {
+      color:var(--text-muted);
+      font-size:13px;
+      white-space:nowrap;
+    }
     .automation-grid-2 {
       display:grid;
       grid-template-columns:1fr 1fr;
@@ -617,50 +695,58 @@
       </p>
     </div>
     <div class="card" id="automationCard">
-      <h2>
-        Automatisierung
-        <span class="automation-mode-pill automation-mode-manual" id="automationModePill">Manuell prüfen</span>
-      </h2>
-      <p>Wähle, wie das System Mahnungen erstellt und versendet. Default: Entwürfe zur manuellen Freigabe.</p>
-      <div class="automation-grid-2">
-        <div class="automation-field">
-          <label for="automationMode">Modus</label>
-          <select id="automationMode" onchange="onAutomationModeChange()">
-            <option value="manual">Manuell prüfen (nur Entwürfe)</option>
-            <option value="automatic">Vollautomatisch (sendet selbst)</option>
-          </select>
-        </div>
-        <div class="automation-field" style="display:flex; align-items:flex-end;">
-          <label class="automation-checkbox">
-            <input type="checkbox" id="automationAutoSend" />
-            Mahnungen automatisch per E-Mail senden
-          </label>
-        </div>
+      <div class="collapsible-header" onclick="toggleAutomationDetails()">
+        <h2>
+          Automatisierung
+          <span class="automation-mode-pill automation-mode-manual" id="automationModePill">Manuell prüfen</span>
+        </h2>
+        <span class="collapse-toggle" id="automationToggle">
+          <span id="automationToggleLabel">Details anzeigen</span>
+          <span class="chevron">▾</span>
+        </span>
       </div>
-      <div class="automation-grid-4">
-        <div class="automation-field">
-          <label for="stage1Days">Mahnstufe 1 nach (Tagen)</label>
-          <input type="number" id="stage1Days" min="1" value="7" />
+      <div class="collapsible-body collapsed" id="automationBody">
+        <p>Wähle, wie das System Mahnungen erstellt und versendet. Default: Entwürfe zur manuellen Freigabe.</p>
+        <div class="automation-grid-2">
+          <div class="automation-field">
+            <label for="automationMode">Modus</label>
+            <select id="automationMode" onchange="onAutomationModeChange()">
+              <option value="manual">Manuell prüfen (nur Entwürfe)</option>
+              <option value="automatic">Vollautomatisch (sendet selbst)</option>
+            </select>
+          </div>
+          <div class="automation-field" style="display:flex; align-items:flex-end;">
+            <label class="automation-checkbox">
+              <input type="checkbox" id="automationAutoSend" />
+              Mahnungen automatisch per E-Mail senden
+            </label>
+          </div>
         </div>
-        <div class="automation-field">
-          <label for="stage2Days">Mahnstufe 2 nach (Tagen)</label>
-          <input type="number" id="stage2Days" min="1" value="14" />
+        <div class="automation-grid-4">
+          <div class="automation-field">
+            <label for="stage1Days">Mahnstufe 1 nach (Tagen)</label>
+            <input type="number" id="stage1Days" min="1" value="7" />
+          </div>
+          <div class="automation-field">
+            <label for="stage2Days">Mahnstufe 2 nach (Tagen)</label>
+            <input type="number" id="stage2Days" min="1" value="14" />
+          </div>
+          <div class="automation-field">
+            <label for="stage3Days">Mahnstufe 3 nach (Tagen)</label>
+            <input type="number" id="stage3Days" min="1" value="30" />
+          </div>
+          <div class="automation-field">
+            <label for="inkassoDays">Inkasso prüfen ab (Tagen)</label>
+            <input type="number" id="inkassoDays" min="1" value="60" />
+          </div>
         </div>
-        <div class="automation-field">
-          <label for="stage3Days">Mahnstufe 3 nach (Tagen)</label>
-          <input type="number" id="stage3Days" min="1" value="30" />
+        <div class="automation-buttons">
+          <button type="button" class="btn-secondary" onclick="saveAutomationSettings()">Einstellungen speichern</button>
+          <button type="button" class="btn-secondary" onclick="runReminderCycle(true)">Trockenlauf starten</button>
+          <button type="button" class="btn-primary" onclick="runReminderCycle(false)">Mahnlauf starten</button>
         </div>
-        <div class="automation-field">
-          <label for="inkassoDays">Inkasso prüfen ab (Tagen)</label>
-          <input type="number" id="inkassoDays" min="1" value="60" />
-        </div>
+        <div id="automationSummary" class="automation-summary"></div>
       </div>
-      <div class="automation-buttons">
-        <button type="button" class="btn-secondary" onclick="saveAutomationSettings()">Einstellungen speichern</button>
-        <button type="button" class="btn-secondary" onclick="runReminderCycle(true)">Trockenlauf starten</button>
-        <button type="button" class="btn-primary" onclick="runReminderCycle(false)">Mahnlauf starten</button>
-      </div>
-      <div id="automationSummary" class="automation-summary"></div>
     </div>
     <div class="card" id="status">
       <h2>Status</h2>
@@ -754,7 +840,40 @@ const statusBox = document.getElementById("status");
 const documentsBox = document.getElementById("documents");
 let allInvoices = [];
 let allReminders = [];
+let allDocuments = [];
 let currentFilter = "all";
+let automationExpanded = false;
+let reminderKpisExpanded = false;
+const INVOICES_PER_PAGE = 25;
+let invoicePage = 1;
+const DOCUMENTS_PER_PAGE = 10;
+let documentsPage = 1;
+function toggleAutomationDetails() {
+  automationExpanded = !automationExpanded;
+  const body = document.getElementById("automationBody");
+  const toggle = document.getElementById("automationToggle");
+  const label = document.getElementById("automationToggleLabel");
+  if (body) body.classList.toggle("collapsed", !automationExpanded);
+  if (toggle) toggle.classList.toggle("expanded", automationExpanded);
+  if (label) label.textContent = automationExpanded ? "Details ausblenden" : "Details anzeigen";
+}
+function toggleReminderKpis() {
+  reminderKpisExpanded = !reminderKpisExpanded;
+  const body = document.getElementById("reminderKpisBody");
+  const toggle = document.getElementById("reminderKpisToggle");
+  const label = document.getElementById("reminderKpisToggleLabel");
+  if (body) body.classList.toggle("collapsed", !reminderKpisExpanded);
+  if (toggle) toggle.classList.toggle("expanded", reminderKpisExpanded);
+  if (label) label.textContent = reminderKpisExpanded ? "ausblenden" : "anzeigen";
+}
+function changeInvoicePage(delta) {
+  invoicePage = Math.max(1, invoicePage + delta);
+  renderInvoices();
+}
+function changeDocumentsPage(delta) {
+  documentsPage = Math.max(1, documentsPage + delta);
+  renderDocuments();
+}
 function getDaysOverdue(dueDate) {
   if (!dueDate) return null;
   const today = new Date();
@@ -1215,6 +1334,7 @@ function reminderStatusBadgeClass(invoiceId) {
 }
 function setFilter(filter) {
   currentFilter = filter;
+  invoicePage = 1;
   renderInvoices();
 }
 function getFilteredInvoices() {
@@ -1290,32 +1410,40 @@ function renderInvoices() {
         <div class="kpi-value">${stage3PlusInvoices.length}</div>
       </div>
     </div>
-    <h2 style="margin-top:8px;">Mahnwesen</h2>
+    <div class="collapsible-header" onclick="toggleReminderKpis()" style="margin-top:18px;">
+      <h2>Mahnwesen</h2>
+      <span class="collapse-toggle${reminderKpisExpanded ? " expanded" : ""}" id="reminderKpisToggle">
+        <span id="reminderKpisToggleLabel">${reminderKpisExpanded ? "ausblenden" : "anzeigen"}</span>
+        <span class="chevron">▾</span>
+      </span>
+    </div>
     <p>Erfolg deines Mahnprozesses auf einen Blick.</p>
-    <div class="kpi-grid">
-      <div class="kpi-card">
-        <div class="kpi-label">Gesendete Mahnungen</div>
-        <div class="kpi-value" id="kpiSent">0</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Heute gesendet</div>
-        <div class="kpi-value" id="kpiSentToday">0</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Automatisch erzeugt</div>
-        <div class="kpi-value" id="kpiAutoGenerated">0</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Eingetrieben durch Mahnungen</div>
-        <div class="kpi-value" id="kpiCollected">0,00 €</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Offene Mahnungen</div>
-        <div class="kpi-value" id="kpiOpen">0</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">E-Mail Fehler</div>
-        <div class="kpi-value" id="kpiErrors">0</div>
+    <div class="collapsible-body${reminderKpisExpanded ? "" : " collapsed"}" id="reminderKpisBody">
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-label">Gesendete Mahnungen</div>
+          <div class="kpi-value" id="kpiSent">0</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Heute gesendet</div>
+          <div class="kpi-value" id="kpiSentToday">0</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Automatisch erzeugt</div>
+          <div class="kpi-value" id="kpiAutoGenerated">0</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Eingetrieben durch Mahnungen</div>
+          <div class="kpi-value" id="kpiCollected">0,00 €</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Offene Mahnungen</div>
+          <div class="kpi-value" id="kpiOpen">0</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">E-Mail Fehler</div>
+          <div class="kpi-value" id="kpiErrors">0</div>
+        </div>
       </div>
     </div>
     <h2>Importierte Rechnungen</h2>
@@ -1349,6 +1477,13 @@ function renderInvoices() {
     renderReminderKpis();
     return;
   }
+  // Pagination: Seitenanzahl + Slice der gefilterten Liste
+  const totalFiltered = invoices.length;
+  const totalInvoicePages = Math.max(1, Math.ceil(totalFiltered / INVOICES_PER_PAGE));
+  if (invoicePage > totalInvoicePages) invoicePage = totalInvoicePages;
+  if (invoicePage < 1) invoicePage = 1;
+  const invStart = (invoicePage - 1) * INVOICES_PER_PAGE;
+  const pagedInvoices = invoices.slice(invStart, invStart + INVOICES_PER_PAGE);
   html += `
     <div class="table-wrap">
     <table>
@@ -1366,7 +1501,7 @@ function renderInvoices() {
       </thead>
       <tbody>
   `;
-  invoices.forEach(inv => {
+  pagedInvoices.forEach(inv => {
     const status = inv.payment_status || "-";
     const isOverdue = status === "überfällig";
     const stage = inv._reminderStage || calculateReminderStage(inv);
@@ -1431,6 +1566,15 @@ function renderInvoices() {
     </table>
     </div>
   `;
+  if (totalFiltered > INVOICES_PER_PAGE) {
+    html += `
+      <div class="pagination">
+        <button type="button" onclick="changeInvoicePage(-1)" ${invoicePage <= 1 ? "disabled" : ""}>Zurück</button>
+        <span class="pagination-info">Seite ${invoicePage} von ${totalInvoicePages} · ${totalFiltered} Rechnungen</span>
+        <button type="button" onclick="changeInvoicePage(1)" ${invoicePage >= totalInvoicePages ? "disabled" : ""}>Weiter</button>
+      </div>
+    `;
+  }
   statusBox.innerHTML = html;
   renderReminderKpis();
 }
@@ -1482,9 +1626,14 @@ async function loadDocuments() {
     .order("created_at", { ascending:false });
   if (error) {
     console.error("Fehler beim Laden der PDFs:", error);
+    allDocuments = [];
+    documentsPage = 1;
+    renderDocuments();
     return;
   }
-  renderDocuments(data || []);
+  allDocuments = data || [];
+  documentsPage = 1;
+  renderDocuments();
 }
 async function openPdf(path) {
   const { data, error } = await supabaseClient
@@ -1498,18 +1647,25 @@ async function openPdf(path) {
   }
   window.open(data.signedUrl, "_blank");
 }
-function renderDocuments(documents) {
+function renderDocuments() {
   if (!documentsBox) return;
-  if (!documents || documents.length === 0) {
+  const documents = Array.isArray(allDocuments) ? allDocuments : [];
+  if (documents.length === 0) {
     documentsBox.innerHTML = `
       <h2>Hochgeladene PDFs</h2>
       <p>Noch keine PDFs hochgeladen.</p>
     `;
     return;
   }
+  const totalDocs = documents.length;
+  const totalDocPages = Math.max(1, Math.ceil(totalDocs / DOCUMENTS_PER_PAGE));
+  if (documentsPage > totalDocPages) documentsPage = totalDocPages;
+  if (documentsPage < 1) documentsPage = 1;
+  const docStart = (documentsPage - 1) * DOCUMENTS_PER_PAGE;
+  const pagedDocs = documents.slice(docStart, docStart + DOCUMENTS_PER_PAGE);
   let html = `
     <h2>Hochgeladene PDFs</h2>
-    <p>${documents.length} PDF-Dokumente gespeichert.</p>
+    <p>${totalDocs} PDF-Dokumente gespeichert.</p>
     <table>
       <thead>
         <tr>
@@ -1521,7 +1677,7 @@ function renderDocuments(documents) {
       </thead>
       <tbody>
   `;
-  documents.forEach(doc => {
+  pagedDocs.forEach(doc => {
     const docStatus = doc.status || "uploaded";
     const isProcessed = docStatus === "processed";
     const statusBadgeClass = isProcessed ? "badge-processed" : "badge-open";
@@ -1553,6 +1709,15 @@ function renderDocuments(documents) {
       </tbody>
     </table>
   `;
+  if (totalDocs > DOCUMENTS_PER_PAGE) {
+    html += `
+      <div class="pagination">
+        <button type="button" onclick="changeDocumentsPage(-1)" ${documentsPage <= 1 ? "disabled" : ""}>Zurück</button>
+        <span class="pagination-info">Seite ${documentsPage} von ${totalDocPages} · ${totalDocs} PDFs</span>
+        <button type="button" onclick="changeDocumentsPage(1)" ${documentsPage >= totalDocPages ? "disabled" : ""}>Weiter</button>
+      </div>
+    `;
+  }
   documentsBox.innerHTML = html;
 }
 async function manualParsePdf(fileName, filePath) {
@@ -1906,6 +2071,10 @@ window.loadAutomationSettings = loadAutomationSettings;
 window.calculateReminderKpis = calculateReminderKpis;
 window.renderReminderKpis = renderReminderKpis;
 window.formatCurrency = formatCurrency;
+window.toggleAutomationDetails = toggleAutomationDetails;
+window.toggleReminderKpis = toggleReminderKpis;
+window.changeInvoicePage = changeInvoicePage;
+window.changeDocumentsPage = changeDocumentsPage;
 uploadBtn.addEventListener("click", uploadFile);
 pdfUploadBtn.addEventListener("click", uploadPdf);
 logoutBtn.addEventListener("click", logout);
