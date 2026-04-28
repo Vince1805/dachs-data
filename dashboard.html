@@ -554,36 +554,18 @@ async function loadDocuments() {
     return;
   }
   renderDocuments(data || []);
-  async function loadDocuments() {
-  const { data, error } = await supabaseClient
-    .from("uploaded_documents")
-    .select("*")
-    .order("created_at", { ascending:false });
-
-  if (error) {
-    console.error("Fehler beim Laden der PDFs:", error);
-    return;
-  }
-
-  renderDocuments(data || []);
 }
-
 async function openPdf(path) {
-  const { data } = supabaseClient
+  const { data, error } = await supabaseClient
     .storage
     .from("uploads")
-    .getPublicUrl(path);
-
-  if (!data || !data.publicUrl) {
+    .createSignedUrl(path, 60);
+  if (error || !data || !data.signedUrl) {
     alert("PDF konnte nicht geöffnet werden.");
+    console.error("createSignedUrl error:", error);
     return;
   }
-
-  window.open(data.publicUrl, "_blank");
-}
-
-  window.open(data.publicUrl, "_blank");
-}
+  window.open(data.signedUrl, "_blank");
 }
 function renderDocuments(documents) {
   if (!documentsBox) return;
@@ -611,10 +593,10 @@ function renderDocuments(documents) {
     html += `
       <tr>
         <td>
-  <a href="#" onclick="openPdf('${doc.file_path}')" style="color:var(--blue); text-decoration:none; font-weight:500;">
-    ${doc.file_name || "-"}
-  </a>
-</td>
+          <a href="#" onclick="openPdf('${doc.file_path}'); return false;" style="color:var(--blue); text-decoration:none; font-weight:500;">
+            ${doc.file_name || "-"}
+          </a>
+        </td>
         <td>
           <span class="badge badge-open">
             ${doc.status || "uploaded"}
@@ -630,6 +612,8 @@ function renderDocuments(documents) {
   `;
   documentsBox.innerHTML = html;
 }
+window.openPdf = openPdf;
+window.setFilter = setFilter;
 uploadBtn.addEventListener("click", uploadFile);
 pdfUploadBtn.addEventListener("click", uploadPdf);
 logoutBtn.addEventListener("click", logout);
