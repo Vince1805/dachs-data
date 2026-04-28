@@ -4,7 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard – DACHS DATA</title>
-
+  <link rel="icon" href="dachs-data-logo.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
   <style>
     :root {
       --black:#0B0B0B;
@@ -18,17 +24,15 @@
       --red-bg:#FEE4E2;
       --blue-bg:#EAF0FF;
     }
-
     * { box-sizing:border-box; }
-
     html, body {
       margin:0;
       padding:0;
-      font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Roboto,sans-serif;
+      font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
       background:var(--grey);
       color:var(--black);
+      -webkit-font-smoothing:antialiased;
     }
-
     #loading {
       position:fixed;
       inset:0;
@@ -39,16 +43,12 @@
       color:var(--text-muted);
       z-index:100;
     }
-
     #loading.hidden { display:none; }
-
     #dashboard {
       display:none;
       min-height:100vh;
     }
-
     #dashboard.visible { display:block; }
-
     .topbar {
       background:var(--white);
       border-bottom:1px solid var(--grey-2);
@@ -57,25 +57,28 @@
       justify-content:space-between;
       align-items:center;
     }
-
     .brand {
-      font-weight:700;
-      font-size:18px;
+      display:inline-flex;
+      align-items:center;
+      color:var(--blue);
+      text-decoration:none;
+      line-height:0;
     }
-
-    .brand span { color:var(--blue); }
-
+    .brand svg {
+      display:block;
+      overflow:visible;
+      height:48px;
+      width:auto;
+    }
     .user-area {
       display:flex;
       gap:16px;
       align-items:center;
     }
-
     .user-email {
       font-size:14px;
       color:var(--text-muted);
     }
-
     button {
       cursor:pointer;
       border-radius:8px;
@@ -85,38 +88,31 @@
       padding:9px 16px;
       font-family:inherit;
     }
-
     .btn-primary {
       background:var(--blue);
       color:white;
     }
-
     .btn-primary:hover {
       background:var(--blue-hover);
     }
-
     .btn-secondary {
       background:white;
       color:var(--black);
       border-color:var(--grey-2);
     }
-
     .container {
       max-width:960px;
       margin:0 auto;
       padding:48px 32px;
     }
-
     h1 {
       font-size:32px;
       margin:0 0 8px;
     }
-
     .subtitle {
       color:var(--text-muted);
       margin:0 0 40px;
     }
-
     .card {
       background:white;
       border:1px solid var(--grey-2);
@@ -124,24 +120,20 @@
       padding:28px;
       margin-bottom:20px;
     }
-
     .card h2 {
       margin:0 0 6px;
       font-size:18px;
     }
-
     .card p {
       color:var(--text-muted);
       margin:0 0 20px;
     }
-
     .upload-row {
       display:flex;
       gap:12px;
       align-items:center;
       flex-wrap:wrap;
     }
-
     input[type="file"] {
       font-size:14px;
       padding:8px 10px;
@@ -149,39 +141,33 @@
       border-radius:8px;
       background:white;
     }
-
     .kpi-grid {
       display:grid;
       grid-template-columns:repeat(3, 1fr);
       gap:14px;
       margin-bottom:28px;
     }
-
     .kpi-card {
       background:#F5F5F7;
       border:1px solid #E5E5EA;
       border-radius:10px;
       padding:18px;
     }
-
     .kpi-label {
       font-size:13px;
       color:#6B6B70;
       margin-bottom:8px;
     }
-
     .kpi-value {
       font-size:24px;
       font-weight:700;
     }
-
     .filter-row {
       display:flex;
       gap:10px;
       flex-wrap:wrap;
       margin:18px 0 22px;
     }
-
     .filter-btn {
       background:white;
       border:1px solid var(--grey-2);
@@ -189,13 +175,11 @@
       padding:8px 14px;
       border-radius:999px;
     }
-
     .filter-btn.active {
       background:var(--blue);
       color:white;
       border-color:var(--blue);
     }
-
     .badge {
       display:inline-flex;
       align-items:center;
@@ -204,57 +188,49 @@
       font-size:12px;
       font-weight:600;
     }
-
     .badge-open {
       background:var(--blue-bg);
       color:var(--blue);
     }
-
     .badge-overdue {
       background:var(--red-bg);
       color:var(--red);
     }
-
     table {
       width:100%;
       border-collapse:collapse;
       margin-top:20px;
       font-size:14px;
     }
-
     th {
       text-align:left;
       padding:10px;
       border-bottom:1px solid #ddd;
     }
-
     td {
       padding:10px;
       border-bottom:1px solid #eee;
     }
-
     .amount-overdue {
       color:var(--red);
       font-weight:600;
     }
-
     @media (max-width:700px) {
       .kpi-grid {
         grid-template-columns:1fr;
       }
-
       .container {
         padding:32px 20px;
       }
-
       .topbar {
         padding:14px 20px;
       }
-
       .user-email {
         display:none;
       }
-
+      .brand svg {
+        height:40px;
+      }
       table {
         display:block;
         overflow-x:auto;
@@ -263,51 +239,55 @@
     }
   </style>
 </head>
-
 <body>
-
 <div id="loading">Lade Dashboard…</div>
-
 <div id="dashboard">
   <header class="topbar">
-    <div class="brand">DACHS <span>DATA</span></div>
-
+    <a href="/" class="brand" aria-label="DACHS DATA — Startseite">
+      <svg viewBox="0 0 360 160" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <text
+          x="180" y="80" text-anchor="middle"
+          font-family="'Archivo Black', 'Helvetica Neue', Arial, sans-serif"
+          font-weight="400" font-size="80" letter-spacing="2"
+          fill="none" stroke="currentColor" stroke-width="2.2"
+          stroke-linejoin="round" paint-order="stroke fill"
+        >DACHS</text>
+        <text
+          x="180" y="140" text-anchor="middle"
+          font-family="'Archivo Black', 'Helvetica Neue', Arial, sans-serif"
+          font-weight="400" font-size="40" letter-spacing="14"
+          fill="currentColor"
+        >DATA</text>
+      </svg>
+    </a>
     <div class="user-area">
       <span class="user-email" id="userEmail"></span>
       <button class="btn-secondary" id="logoutBtn">Abmelden</button>
     </div>
   </header>
-
   <main class="container">
     <h1>Willkommen zurück</h1>
     <p class="subtitle">Verwalte deine Forderungen und automatisierten Mahnprozesse.</p>
-
     <div class="card">
       <h2>Daten importieren</h2>
       <p>Lade deine offenen Forderungen als Excel- oder CSV-Datei hoch.</p>
-
       <div class="upload-row">
         <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" />
         <button class="btn-primary" id="uploadBtn">Hochladen</button>
       </div>
     </div>
-
     <div class="card" id="status">
       <h2>Status</h2>
       <p>Noch keine Daten vorhanden.</p>
     </div>
   </main>
 </div>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-
 <script>
 const SUPABASE_URL = "https://mmwhpcopwygabwmszdls.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1td2hwY29wd3lnYWJ3bXN6ZGxzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczMTQ4MzUsImV4cCI6MjA5Mjg5MDgzNX0.NY5SEa7i7ZUbfEWa8ZuY6xYvJSgSxijLa8rHp21FPKk";
-
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
 const loadingEl = document.getElementById("loading");
 const dashboardEl = document.getElementById("dashboard");
 const userEmailEl = document.getElementById("userEmail");
@@ -315,58 +295,43 @@ const logoutBtn = document.getElementById("logoutBtn");
 const fileInput = document.getElementById("fileInput");
 const uploadBtn = document.getElementById("uploadBtn");
 const statusBox = document.getElementById("status");
-
 let allInvoices = [];
 let currentFilter = "all";
-
 async function checkSession() {
   const { data, error } = await supabaseClient.auth.getSession();
-
   if (error || !data.session) {
     window.location.href = "/login.html";
     return;
   }
-
   userEmailEl.textContent = data.session.user.email;
-
   loadingEl.classList.add("hidden");
   dashboardEl.classList.add("visible");
-
   await loadInvoices();
 }
-
 async function logout() {
   await supabaseClient.auth.signOut();
   window.location.href = "/login.html";
 }
-
 async function uploadFile() {
   const file = fileInput.files[0];
-
   if (!file) {
     alert("Bitte Datei auswählen");
     return;
   }
-
   const { data: { session } } = await supabaseClient.auth.getSession();
-
   const safeFileName = file.name.replaceAll(" ", "_");
   const filePath = `${session.user.id}/${Date.now()}_${safeFileName}`;
-
   const { error: uploadError } = await supabaseClient.storage
     .from("uploads")
     .upload(filePath, file);
-
   if (uploadError) {
     alert("Upload fehlgeschlagen: " + uploadError.message);
     return;
   }
-
   const arrayBuffer = await file.arrayBuffer();
   const workbook = XLSX.read(arrayBuffer, { type:"array" });
   const sheet = workbook.Sheets[workbook.SheetNames[0]];
   const rows = XLSX.utils.sheet_to_json(sheet);
-
   const invoices = rows.map(row => ({
     company_id:null,
     customer_name:row.kunde,
@@ -376,95 +341,75 @@ async function uploadFile() {
     payment_status:row.status || "offen",
     reminder_stage:"none"
   }));
-
   const { error: insertError } = await supabaseClient
     .from("invoices")
     .insert(invoices);
-
   if (insertError) {
     alert("Datei hochgeladen, aber Speichern fehlgeschlagen: " + insertError.message);
     return;
   }
-
   alert("Upload erfolgreich. Rechnungen wurden gespeichert.");
   await loadInvoices();
 }
-
 async function loadInvoices() {
   const { data, error } = await supabaseClient
     .from("invoices")
     .select("*")
     .order("created_at", { ascending:false });
-
   if (error) {
     console.error(error);
     statusBox.innerHTML = "<h2>Status</h2><p>Fehler beim Laden der Rechnungen.</p>";
     return;
   }
-
   allInvoices = data || [];
   renderInvoices();
 }
-
 function setFilter(filter) {
   currentFilter = filter;
   renderInvoices();
 }
-
 function getFilteredInvoices() {
   if (currentFilter === "open") {
     return allInvoices.filter(inv => inv.payment_status === "offen");
   }
-
   if (currentFilter === "overdue") {
     return allInvoices.filter(inv => inv.payment_status === "überfällig");
   }
-
   return allInvoices;
 }
-
 function renderInvoices() {
   const invoices = getFilteredInvoices();
-
   if (!allInvoices || allInvoices.length === 0) {
     statusBox.innerHTML = "<h2>Status</h2><p>Noch keine Daten vorhanden.</p>";
     return;
   }
-
   const formatEuro = value =>
     new Intl.NumberFormat("de-DE", {
       style:"currency",
       currency:"EUR"
     }).format(value);
-
   const totalAmount = allInvoices.reduce((sum, inv) => sum + Number(inv.amount || 0), 0);
   const overdueInvoices = allInvoices.filter(inv => inv.payment_status === "überfällig");
   const overdueAmount = overdueInvoices.reduce((sum, inv) => sum + Number(inv.amount || 0), 0);
   const openInvoices = allInvoices.filter(inv => inv.payment_status === "offen");
-
   let html = `
     <h2>Übersicht</h2>
     <p>${allInvoices.length} Rechnungen geladen.</p>
-
     <div class="kpi-grid">
       <div class="kpi-card">
         <div class="kpi-label">Gesamtforderungen</div>
         <div class="kpi-value">${formatEuro(totalAmount)}</div>
       </div>
-
       <div class="kpi-card">
         <div class="kpi-label">Überfällig</div>
         <div class="kpi-value">${formatEuro(overdueAmount)}</div>
       </div>
-
       <div class="kpi-card">
         <div class="kpi-label">Offene Rechnungen</div>
         <div class="kpi-value">${openInvoices.length}</div>
       </div>
     </div>
-
     <h2>Importierte Rechnungen</h2>
-
     <div class="filter-row">
       <button class="filter-btn ${currentFilter === "all" ? "active" : ""}" onclick="setFilter('all')">
         Alle (${allInvoices.length})
@@ -477,13 +422,11 @@ function renderInvoices() {
       </button>
     </div>
   `;
-
   if (invoices.length === 0) {
     html += `<p>Keine Rechnungen für diesen Filter.</p>`;
     statusBox.innerHTML = html;
     return;
   }
-
   html += `
     <table>
       <thead>
@@ -497,11 +440,9 @@ function renderInvoices() {
       </thead>
       <tbody>
   `;
-
   invoices.forEach(inv => {
     const status = inv.payment_status || "-";
     const isOverdue = status === "überfällig";
-
     html += `
       <tr>
         <td>${inv.customer_name || "-"}</td>
@@ -516,20 +457,15 @@ function renderInvoices() {
       </tr>
     `;
   });
-
   html += `
       </tbody>
     </table>
   `;
-
   statusBox.innerHTML = html;
 }
-
 uploadBtn.addEventListener("click", uploadFile);
 logoutBtn.addEventListener("click", logout);
-
 checkSession();
 </script>
-
 </body>
 </html>
