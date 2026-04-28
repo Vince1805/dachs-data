@@ -201,6 +201,7 @@
       padding:4px 10px;
       font-size:12px;
       font-weight:600;
+      white-space:nowrap;
     }
     .badge-open {
       background:var(--blue-bg);
@@ -247,15 +248,34 @@
       border-collapse:collapse;
       margin-top:20px;
       font-size:14px;
+      table-layout:auto;
+    }
+    th, td {
+      vertical-align:middle;
     }
     th {
       text-align:left;
-      padding:10px;
+      padding:10px 12px;
       border-bottom:1px solid #ddd;
+      white-space:nowrap;
     }
     td {
-      padding:10px;
+      padding:10px 12px;
       border-bottom:1px solid #eee;
+    }
+    .table-wrap {
+      width:100%;
+      overflow-x:auto;
+      -webkit-overflow-scrolling:touch;
+      margin-top:20px;
+    }
+    .table-wrap table {
+      margin-top:0;
+    }
+    /* Spalten ab Position 3 (Betrag, Status, Mahnstufe, Mahnung, Fällig, Aktion) nicht umbrechen */
+    .table-wrap th:nth-child(n+3),
+    .table-wrap td:nth-child(n+3) {
+      white-space:nowrap;
     }
     .amount-overdue {
       color:var(--red);
@@ -396,6 +416,8 @@
       font-size:13px;
       font-weight:500;
       cursor:pointer;
+      white-space:nowrap;
+      min-width:120px;
     }
     .reminder-action-btn:hover {
       background:var(--blue-bg);
@@ -423,7 +445,7 @@
       .card {
         padding:22px;
       }
-      table {
+      .card > table {
         display:block;
         overflow-x:auto;
         white-space:nowrap;
@@ -927,6 +949,7 @@ function renderInvoices() {
     return;
   }
   html += `
+    <div class="table-wrap">
     <table>
       <thead>
         <tr>
@@ -1001,6 +1024,7 @@ function renderInvoices() {
   html += `
       </tbody>
     </table>
+    </div>
   `;
   statusBox.innerHTML = html;
 }
