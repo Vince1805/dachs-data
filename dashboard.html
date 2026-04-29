@@ -606,6 +606,66 @@
       white-space:normal;
       line-height:1.25;
     }
+    .billing-banner {
+      display:none;
+      margin-bottom:20px;
+      padding:14px 18px;
+      border-radius:12px;
+      border:1px solid var(--grey-2);
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+      background:white;
+    }
+    .billing-banner.visible {
+      display:flex;
+    }
+    .billing-banner-text {
+      flex:1 1 auto;
+      min-width:0;
+      font-size:14px;
+      line-height:1.4;
+    }
+    .billing-banner-text strong {
+      display:block;
+      font-size:15px;
+      margin-bottom:2px;
+    }
+    .billing-banner.inactive {
+      background:#FEF3C7;
+      border-color:#FCD34D;
+      color:#92400E;
+    }
+    .billing-banner.active {
+      background:var(--green-bg);
+      border-color:#A7F3D0;
+      color:var(--green);
+    }
+    .billing-banner.past_due,
+    .billing-banner.unpaid,
+    .billing-banner.canceled {
+      background:#FEE4E2;
+      border-color:#FECACA;
+      color:#B42318;
+    }
+    .billing-banner button {
+      white-space:nowrap;
+      flex-shrink:0;
+    }
+    .billing-banner.inactive button,
+    .billing-banner.past_due button,
+    .billing-banner.unpaid button,
+    .billing-banner.canceled button {
+      background:var(--blue);
+      color:white;
+      border:1px solid var(--blue);
+    }
+    .billing-banner.active button {
+      background:white;
+      color:var(--black);
+      border:1px solid var(--grey-2);
+    }
     @media (max-width:700px) {
       .kpi-grid {
         grid-template-columns:1fr;
@@ -735,6 +795,7 @@
     </div>
   </header>
   <main class="container">
+    <div id="billingBanner" class="billing-banner" role="status" aria-live="polite"></div>
     <h1>Willkommen zurück</h1>
     <p class="subtitle">Verwalte deine Forderungen und automatisierten Mahnprozesse.</p>
     <div class="card">
@@ -900,6 +961,124 @@ let allInvoices = [];
 let allReminders = [];
 let allDocuments = [];
 let currentFilter = "all";
+let billingProfile = null;
+let billingActive = false;
+async function loadBillingProfile() {
+  const { data, error } = await supabaseClient
+    .from("billing_profiles")
+    .select("*")
+    .maybeSingle();
+  if (error) {
+    console.error("billing_profiles load error:", error);
+    billingProfile = null;
+    billingActive = false;
+  } else {
+    billingProfile = data;
+    const status = data && data.subscription_status;
+    billingActive = status === "active" || status === "trialing";
+  }
+  renderBillingBanner();
+}
+function renderBillingBanner() {
+  const el = document.getElementById("billingBanner");
+  if (!el) return;
+  el.className = "billing-banner visible";
+  const status = billingProfile && billingProfile.subscription_status
+    ? billingProfile.subscription_status
+    : "none";
+  if (billingActive) {
+    el.classList.add("active");
+    const trialNote = billingProfile && billingProfile.trial_end
+      ? ` (Testphase bis ${new Date(billingProfile.trial_end).toLocaleDateString("de-DE")})`
+      : "";
+    const periodEnd = billingProfile && billingProfile.current_period_end
+      ? ` · Verlängerung am ${new Date(billingProfile.current_period_end).toLocaleDateString("de-DE")}`
+      : "";
+    el.innerHTML = `
+      <div class="billing-banner-text">
+        <strong>Plan aktiv${trialNote}</strong>
+        Forderungsmanagement freigeschaltet${periodEnd}.
+      </div>
+      <button type="button" onclick="openBillingPortal()">Billing verwalten</button>
+    `;
+    return;
+  }
+  if (status === "past_due" || status === "unpaid" || status === "canceled") {
+    el.classList.add(status);
+    el.innerHTML = `
+      <div class="billing-banner-text">
+        <strong>Zahlung erforderlich (${status})</strong>
+        Bitte aktualisieren Sie Ihre Zahlungsmethode, um das Forderungsmanagement weiter zu nutzen.
+      </div>
+      <button type="button" onclick="openBillingPortal()">Billing öffnen</button>
+    `;
+    return;
+  }
+  // Default: kein Plan / none / incomplete / etc.
+  el.classList.add("inactive");
+  el.innerHTML = `
+    <div class="billing-banner-text">
+      <strong>Kein aktiver Plan</strong>
+      Aktivieren Sie einen Plan, um Mahnungen, Uploads und Automatisierung zu nutzen.
+    </div>
+    <button type="button" onclick="startCheckout()">Plan aktivieren</button>
+  `;
+}
+function requireActiveBilling() {
+  if (billingActive) return true;
+  alert("Bitte aktivieren Sie zuerst einen Plan, um diese Funktion zu nutzen.");
+  return false;
+}
+async function startCheckout() {
+  try {
+    const { data, error } = await supabaseClient.functions.invoke("create-checkout-session", {
+      body: {}
+    });
+    if (error) throw new Error(error.message || "Edge Function Fehler");
+    if (!data || !data.ok || !data.url) {
+      throw new Error((data && data.error) || "Keine Checkout-URL erhalten");
+    }
+    window.location.href = data.url;
+  } catch (e) {
+    console.error("startCheckout error:", e);
+    alert("Checkout konnte nicht gestartet werden: " + (e.message || e));
+  }
+}
+async function openBillingPortal() {
+  try {
+    const { data, error } = await supabaseClient.functions.invoke("create-billing-portal-session", {
+      body: {}
+    });
+    if (error) throw new Error(error.message || "Edge Function Fehler");
+    if (!data || !data.ok || !data.url) {
+      throw new Error((data && data.error) || "Keine Portal-URL erhalten");
+    }
+    window.location.href = data.url;
+  } catch (e) {
+    console.error("openBillingPortal error:", e);
+    alert("Billing Portal konnte nicht geöffnet werden: " + (e.message || e));
+  }
+}
+async function handleBillingReturnParams() {
+  const params = new URLSearchParams(window.location.search);
+  const billingParam = params.get("billing");
+  if (!billingParam) return;
+  if (billingParam === "success") {
+    // Webhook braucht ein paar Sekunden — kurz pollen, bis active
+    for (let i = 0; i < 6 && !billingActive; i++) {
+      await new Promise(r => setTimeout(r, 1500));
+      await loadBillingProfile();
+    }
+    if (billingActive) {
+      alert("Vielen Dank! Ihr Plan ist aktiv.");
+    } else {
+      alert("Ihre Zahlung wird bestätigt. Falls die Aktivierung in 1–2 Minuten nicht erscheint, einmal neu laden.");
+    }
+  } else if (billingParam === "cancel") {
+    alert("Checkout abgebrochen. Sie können den Plan jederzeit später aktivieren.");
+  }
+  window.history.replaceState({}, "", window.location.pathname);
+}
 let automationExpanded = false;
 let reminderKpisExpanded = false;
 const INVOICES_PER_PAGE = 25;
@@ -1057,6 +1236,8 @@ async function checkSession() {
   userEmailEl.textContent = data.session.user.email;
   loadingEl.classList.add("hidden");
   dashboardEl.classList.add("visible");
+  await loadBillingProfile();
+  await handleBillingReturnParams();
   await loadInvoices();
   await loadReminders();
   renderInvoices();
@@ -1068,6 +1249,7 @@ async function logout() {
   window.location.href = "/login.html";
 }
 async function uploadFile() {
+  if (!requireActiveBilling()) return;
   const file = fileInput.files[0];
   if (!file) {
     alert("Bitte Datei auswählen");
@@ -1282,6 +1464,7 @@ function onAutomationModeChange() {
   }
 }
 async function saveAutomationSettings() {
+  if (!requireActiveBilling()) return;
   const { data: { session } } = await supabaseClient.auth.getSession();
   if (!session) {
     window.location.href = "/login.html";
@@ -1320,6 +1503,7 @@ async function saveAutomationSettings() {
   alert("Einstellungen gespeichert.");
 }
 async function runReminderCycle(dryRun) {
+  if (!requireActiveBilling()) return;
   const summary = document.getElementById("automationSummary");
   if (summary) {
     summary.classList.add("visible");
@@ -1637,6 +1821,7 @@ function renderInvoices() {
   renderReminderKpis();
 }
 async function uploadPdf() {
+  if (!requireActiveBilling()) return;
   const file = pdfInput.files[0];
   if (!file) {
     alert("Bitte PDF-Datei auswählen");
@@ -1779,6 +1964,7 @@ function renderDocuments() {
   documentsBox.innerHTML = html;
 }
 async function manualParsePdf(fileName, filePath) {
+  if (!requireActiveBilling()) return;
   console.log("AI Parsing für:", fileName, filePath);
   let parsed = null;
   try {
@@ -1954,6 +2140,7 @@ function closeReminderModal() {
   currentReminderId = null;
 }
 async function generateReminderText() {
+  if (!requireActiveBilling()) return;
   if (!currentReminderInvoice) return;
   const tone = document.getElementById("reminderTone").value;
   const stage = currentReminderInvoice._reminderStage || calculateReminderStage(currentReminderInvoice);
@@ -1990,6 +2177,7 @@ async function generateReminderText() {
   }
 }
 async function persistReminder(targetStatus) {
+  if (!requireActiveBilling()) return null;
   if (!currentReminderInvoice) return null;
   const subject = document.getElementById("reminderSubject").value.trim();
   const body = document.getElementById("reminderBody").value.trim();
@@ -2066,6 +2254,7 @@ async function approveReminder() {
   }
 }
 async function sendReminderEmail() {
+  if (!requireActiveBilling()) return;
   if (!currentReminderId) {
     alert("Bitte zuerst Entwurf speichern und freigeben.");
     return;
@@ -2133,6 +2322,9 @@ window.toggleAutomationDetails = toggleAutomationDetails;
 window.toggleReminderKpis = toggleReminderKpis;
 window.changeInvoicePage = changeInvoicePage;
 window.changeDocumentsPage = changeDocumentsPage;
+window.startCheckout = startCheckout;
+window.openBillingPortal = openBillingPortal;
+window.loadBillingProfile = loadBillingProfile;
 uploadBtn.addEventListener("click", uploadFile);
 pdfUploadBtn.addEventListener("click", uploadPdf);
 logoutBtn.addEventListener("click", logout);
