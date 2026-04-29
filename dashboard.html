@@ -666,6 +666,67 @@
       color:var(--black);
       border:1px solid var(--grey-2);
     }
+    .promo-form {
+      flex:1 1 100%;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:8px;
+      padding-top:12px;
+      border-top:1px dashed rgba(0,0,0,0.12);
+    }
+    .promo-form-label {
+      font-size:13px;
+      font-weight:500;
+      flex:0 0 auto;
+    }
+    .promo-form input {
+      flex:1 1 180px;
+      min-width:0;
+      font-family:inherit;
+      font-size:13px;
+      padding:7px 12px;
+      border:1px solid var(--grey-2);
+      border-radius:8px;
+      background:white;
+      color:var(--black);
+      text-transform:uppercase;
+      letter-spacing:0.05em;
+    }
+    .promo-form input:focus {
+      outline:none;
+      border-color:var(--blue);
+      box-shadow:0 0 0 3px rgba(10,42,107,0.12);
+    }
+    .promo-form button {
+      white-space:nowrap;
+      flex:0 0 auto;
+      background:white;
+      color:var(--blue);
+      border:1px solid var(--blue);
+      padding:7px 14px;
+      border-radius:8px;
+      font-size:13px;
+      font-weight:500;
+      cursor:pointer;
+    }
+    .promo-form button:hover {
+      background:var(--blue-bg);
+    }
+    @media (max-width:700px) {
+      .promo-form {
+        flex-direction:column;
+        align-items:stretch;
+      }
+      .promo-form input,
+      .promo-form button {
+        width:100%;
+      }
+      .promo-form-label {
+        text-align:left;
+      }
+    }
     @media (max-width:700px) {
       .kpi-grid {
         grid-template-columns:1fr;
@@ -975,18 +1036,48 @@ async function loadBillingProfile() {
   } else {
     billingProfile = data;
     const status = data && data.subscription_status;
-    billingActive = status === "active" || status === "trialing";
+    billingActive = status === "active" || status === "trialing" || status === "promo";
   }
   renderBillingBanner();
 }
-function renderBillingBanner() {
+function renderBillingBanner(statusOverride) {
   const el = document.getElementById("billingBanner");
-  if (!el) return;
+  if (!el) {
+    console.warn("renderBillingBanner: #billingBanner nicht gefunden");
+    return;
+  }
+  // Status entweder explizit übergeben oder aus billingProfile ableiten.
+  const status = statusOverride
+    || (billingProfile && billingProfile.subscription_status)
+    || "none";
+  const hasStripeCustomer = !!(billingProfile && billingProfile.stripe_customer_id);
+  console.log("renderBillingBanner status:", status, "stripeCustomer:", hasStripeCustomer);
+  // Banner-Container immer sichtbar machen, Status-Klassen frisch setzen
   el.className = "billing-banner visible";
-  const status = billingProfile && billingProfile.subscription_status
-    ? billingProfile.subscription_status
-    : "none";
-  if (billingActive) {
+  const promoFormHtml = `
+    <div class="promo-form">
+      <span class="promo-form-label">Promo-Code:</span>
+      <input id="promoCodeInput" type="text" placeholder="z. B. DEMO100" autocomplete="off" />
+      <button type="button" onclick="redeemPromoCode()">Code einlösen</button>
+    </div>
+  `;
+  // ── 1. PROMO ── grüner Banner, kein Promo-Form
+  if (status === "promo") {
+    el.classList.add("active");
+    const portalBtn = hasStripeCustomer
+      ? `<button type="button" onclick="openBillingPortal()">Billing verwalten</button>`
+      : "";
+    el.innerHTML = `
+      <div class="billing-banner-text">
+        <strong>Promo-Zugang aktiv</strong>
+        Forderungsmanagement freigeschaltet.
+      </div>
+      ${portalBtn}
+    `;
+    return;
+  }
+  // ── 2. ACTIVE / TRIALING ── grüner Banner mit Billing-Portal
+  if (status === "active" || status === "trialing") {
     el.classList.add("active");
     const trialNote = billingProfile && billingProfile.trial_end
       ? ` (Testphase bis ${new Date(billingProfile.trial_end).toLocaleDateString("de-DE")})`
@@ -1003,6 +1094,7 @@ function renderBillingBanner() {
     `;
     return;
   }
+  // ── 3. ZAHLUNGSPROBLEM ── roter Banner + Promo-Form als Rettungsanker
   if (status === "past_due" || status === "unpaid" || status === "canceled") {
     el.classList.add(status);
     el.innerHTML = `
@@ -1011,10 +1103,11 @@ function renderBillingBanner() {
         Bitte aktualisieren Sie Ihre Zahlungsmethode, um das Forderungsmanagement weiter zu nutzen.
       </div>
       <button type="button" onclick="openBillingPortal()">Billing öffnen</button>
+      ${promoFormHtml}
     `;
     return;
   }
-  // Default: kein Plan / none / incomplete / etc.
+  // ── 4. NONE / unbekannt ── gelber Banner + Plan-Button + Promo-Form
   el.classList.add("inactive");
   el.innerHTML = `
     <div class="billing-banner-text">
@@ -1022,7 +1115,31 @@ function renderBillingBanner() {
       Aktivieren Sie einen Plan, um Mahnungen, Uploads und Automatisierung zu nutzen.
     </div>
     <button type="button" onclick="startCheckout()">Plan aktivieren</button>
+    ${promoFormHtml}
   `;
+}
+async function redeemPromoCode() {
+  const input = document.getElementById("promoCodeInput");
+  if (!input) return;
+  const code = (input.value || "").trim();
+  if (!code) {
+    alert("Bitte einen Promo-Code eingeben.");
+    return;
+  }
+  try {
+    const { data, error } = await supabaseClient.functions.invoke("redeem-code", {
+      body: { code }
+    });
+    if (error) throw new Error(error.message || "Edge Function Fehler");
+    if (!data || !data.ok) {
+      throw new Error((data && data.error) || "Code konnte nicht eingelöst werden");
+    }
+    alert("Code aktiviert. Forderungsmanagement ist freigeschaltet.");
+    await loadBillingProfile();
+  } catch (e) {
+    console.error("redeemPromoCode error:", e);
+    alert("Code konnte nicht eingelöst werden: " + (e.message || e));
+  }
 }
 function requireActiveBilling() {
   if (billingActive) return true;
@@ -2325,6 +2442,7 @@ window.changeDocumentsPage = changeDocumentsPage;
 window.startCheckout = startCheckout;
 window.openBillingPortal = openBillingPortal;
 window.loadBillingProfile = loadBillingProfile;
+window.redeemPromoCode = redeemPromoCode;
 uploadBtn.addEventListener("click", uploadFile);
 pdfUploadBtn.addEventListener("click", uploadPdf);
 logoutBtn.addEventListener("click", logout);
